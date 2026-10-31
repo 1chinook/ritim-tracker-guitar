@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Gitar performansını tab ve ritimle karşılaştıran çalışma aracı">
+  <title>Ritim İzi — Gitar Performans Analizi</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">R</span><span>RİTİM İZİ</span></a>
+    <nav><a href="#calisma">Çalışma alanı</a><a href="#nasil">Nasıl çalışır?</a></nav>
+    <button class="ghost" id="demoBtn">Örnek sonucu gör</button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">GİTAR ÇALIŞMANIN YENİ RİTMİ</p>
+        <h1>Çaldığını duy.<br><em>Zamanını gör.</em></h1>
+        <p class="lead">Tabını ekle, mikrofonla çal ya da kaydını yükle. Ritim İzi; hızlandığın, yavaşladığın ve ritimden çıktığın anları görünür kılar.</p>
+        <a class="primary" href="#calisma">Analize başla <span>→</span></a>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
+        <div class="pick">♪</div>
+        <div class="wave"></div>
+        <span class="metric m1">+12 ms<small>erken</small></span>
+        <span class="metric m2">92<small>ritim puanı</small></span>
+      </div>
+    </section>
+
+    <section class="workspace" id="calisma">
+      <div class="section-head">
+        <div><p class="eyebrow">PERFORMANS LABORATUVARI</p><h2>Yeni analiz</h2></div>
+        <div class="steps"><span class="active">1</span><i></i><span>2</span><i></i><span>3</span></div>
+      </div>
+
+      <div class="grid">
+        <article class="card tab-card">
+          <div class="card-title"><span>01</span><div><h3>Tabını ekle</h3><p>Metin olarak yapıştır veya örneği kullan.</p></div></div>
+          <textarea id="tabInput" spellcheck="false" aria-label="Gitar tabı">e|----------------5-7-8--7-5-----------|
+B|----------5-7-8------------8-7-5-----|
+G|----4-5-7------------------------7-5-|
+D|--7----------------------------------|
+A|-------------------------------------|
+E|-------------------------------------|</textarea>
+          <div class="settings"><label>BPM <input id="bpmInput" type="number" value="90" min="30" max="240"></label><label>Ölçü <select><option>4 / 4</option><option>3 / 4</option><option>6 / 8</option></select></label></div>
+        </article>
+
+        <article class="card audio-card">
+          <div class="card-title"><span>02</span><div><h3>Performansını ekle</h3><p>Canlı kaydet veya mevcut ses dosyanı seç.</p></div></div>
+          <div class="source-tabs"><button class="source active" data-mode="record">● Mikrofon</button><button class="source" data-mode="upload">↑ Dosya yükle</button></div>
+          <div id="recordPanel" class="panel active">
+            <div class="recorder">
+              <canvas id="liveCanvas" width="600" height="120"></canvas>
+              <div id="timer">00:00</div>
+              <button id="recordBtn" class="record-btn" aria-label="Kaydı başlat"><span></span></button>
+              <p id="recordStatus">Kaydı başlatmak için dokun</p>
+            </div>
+          </div>
+          <div id="uploadPanel" class="panel">
+            <label class="dropzone" id="dropzone"><input id="fileInput" type="file" accept="audio/*"><b>Ses dosyanı buraya bırak</b><span>veya seçmek için tıkla</span><small>WAV, MP3, M4A, OGG</small></label>
+          </div>
+          <div id="audioReady" class="audio-ready hidden"><div><b id="audioName">performans.wav</b><small id="audioMeta">Ses hazır</small></div><audio id="audioPlayer" controls></audio></div>
+        </article>
+      </div>
+      <button id="analyzeBtn" class="analyze" disabled>Performansı analiz et <span>↗</span></button>
+    </section>
+
+    <section id="results" class="results hidden">
+      <div class="result-top"><div><p class="eyebrow">ANALİZ TAMAMLANDI</p><h2>Performans özeti</h2></div><button id="resetBtn" class="ghost">Yeni analiz</button></div>
+      <div class="score-grid">
+        <div class="score-card main-score"><div class="ring"><strong id="score">88</strong><small>/ 100</small></div><div><p>RİTİM PUANI</p><h3 id="verdict">Gayet iyi gidiyorsun.</h3><span id="summary">Tempo genel olarak kararlı.</span></div></div>
+        <div class="score-card"><p>ORTALAMA TEMPO</p><strong id="tempoResult">91 <small>BPM</small></strong><span id="tempoDelta">Hedefe çok yakın</span></div>
+        <div class="score-card"><p>ZAMANLAMA</p><strong id="timingResult">± 24 <small>ms</small></strong><span>Ortalama sapma</span></div>
+        <div class="score-card"><p>ALGILANAN VURUŞ</p><strong id="onsetResult">28</strong><span id="noteCompare">24 tab notası</span></div>
+      </div>
+      <div class="timeline-card"><div class="timeline-head"><div><h3>Tempo izi</h3><p>Çizgi, performans boyunca tahmini hız değişimini gösterir.</p></div><div class="legend"><span><i class="good"></i>Kararlı</span><span><i class="warn"></i>Sapma</span></div></div><canvas id="resultCanvas" width="1200" height="260"></canvas><div class="insight" id="insight">İkinci yarıda hafif hızlanma algılandı. Metronomla daha yavaş başlayıp aynı tempoyu korumayı dene.</div></div>
+    </section>
+
+    <section id="nasil" class="how"><p class="eyebrow">NASIL ÇALIŞIR?</p><h2>Üç adımda daha bilinçli pratik.</h2><div class="how-grid"><article><b>01</b><h3>Referansı belirle</h3><p>Tabı ve hedef tempoyu gir. Sistem, performansını yorumlamak için bir zaman haritası oluşturur.</p></article><article><b>02</b><h3>Çal veya yükle</h3><p>Mikrofonla doğrudan kayıt yap ya da daha önce kaydettiğin bir performansı yükle.</p></article><article><b>03</b><h3>İzini incele</h3><p>Sesindeki vuruşlar tarayıcıda işlenir; tempo değişimi ve ritim tutarlılığı görselleştirilir.</p></article></div></section>
+  </main>
+  <footer><span>RİTİM İZİ</span><p>Pratiğini duy, gelişimini gör.</p><small>Prototip sürüm · Analiz sonuçları yaklaşık değerlerdir.</small></footer>
+  <script src="app.js"></script>
+</body>
+</html>
