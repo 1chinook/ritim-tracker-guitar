@@ -1,0 +1,123 @@
+/* Temadan bağımsız, iki dilde de sığan üst çubuk. */
+:root {
+  color-scheme: light;
+  --chart-line: #20483a;
+  --chart-grid: #d8d6cc;
+  --chart-target: #899088;
+}
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.language-control select {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  padding: 10px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #edf2e8;
+  --muted: #b0baad;
+  --paper: #111713;
+  --card: #1c261f;
+  --green: #a6d7b9;
+  --line: #3c4d40;
+  --chart-line: #d8ff43;
+  --chart-grid: #3c4d40;
+  --chart-target: #b0baad;
+}
+[data-theme="dark"] .topbar {
+  background: rgba(17, 23, 19, 0.95);
+}
+[data-theme="dark"] .workspace {
+  background: #152f24;
+}
+[data-theme="dark"] .pick,
+[data-theme="dark"] .brand-mark {
+  background: #28573f;
+}
+[data-theme="dark"] .primary,
+[data-theme="dark"] .analyze {
+  background: #d8ff43;
+  color: #151714;
+}
+[data-theme="dark"] .primary span,
+[data-theme="dark"] .analyze span {
+  color: #151714;
+}
+[data-theme="dark"] .metric {
+  color: #151714;
+  border-color: #151714;
+  box-shadow: 5px 5px 0 #28573f;
+}
+[data-theme="dark"] .steps .active {
+  color: #151714;
+}
+[data-theme="dark"] .settings input,
+[data-theme="dark"] .settings select,
+[data-theme="dark"] .record-btn {
+  background: #101a13;
+}
+[data-theme="dark"] .dropzone {
+  background: #172019;
+}
+[data-theme="dark"] .drag-over {
+  background: #2b422e;
+}
+[data-theme="dark"] .insight {
+  background: #2a3b25;
+}
+[data-theme="dark"] .message {
+  background: #48271f;
+  color: #ffd4c5;
+}
+[data-theme="dark"] .ring {
+  border-right-color: #3c4d40;
+}
+[data-theme="dark"] footer {
+  background: #0b100d;
+}
+[data-theme="dark"] footer small {
+  color: #a7b09f;
+}
+@media (max-width: 1100px) {
+  .topbar nav {
+    display: none;
+  }
+}
+@media (max-width: 650px) {
+  .topbar {
+    height: auto;
+    min-height: 76px;
+    padding: 12px 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header-actions {
+    margin-left: auto;
+  }
+  #demoBtn {
+    display: none;
+  }
+  .topbar #themeToggle {
+    display: inline-block;
+    padding: 10px 12px;
+  }
+}

@@ -1,5 +1,9 @@
 import { analyzeRhythm, AnalysisError } from "./rhythm.js";
 import { GuitarRecorder, Metronome } from "./audio.js";
+import { initializePreferences, setText, t } from "./preferences.js";
+
+initializePreferences();
+let latestResult = null;
 
 const elements = {
   recordButton: document.querySelector("#recordBtn"),
@@ -16,7 +20,7 @@ let audioUrl = null;
 let isBusy = false;
 
 function showMessage(message = "") {
-  elements.message.textContent = message;
+  setText(elements.message, message);
   elements.message.classList.toggle("hidden", !message);
 }
 
@@ -48,8 +52,9 @@ function selectAudio(blob, filename) {
   selectedAudio = blob;
   elements.player.src = audioUrl;
   document.querySelector("#audioName").textContent = filename;
-  document.querySelector("#audioMeta").textContent =
-    `${(blob.size / 1024 / 1024).toFixed(1)} MB · analize hazır`;
+  setText("#audioMeta", "{size} MB · analize hazır", {
+    size: (blob.size / 1024 / 1024).toFixed(1),
+  });
   const download = document.querySelector("#downloadAudio");
   download.href = audioUrl;
   download.download = filename;
@@ -68,9 +73,11 @@ const recorder = new GuitarRecorder({
     selectAudio(blob, `gitar-kaydi.${extension}`);
     setBusy(false);
     elements.recordButton.classList.remove("recording");
-    elements.recordButton.setAttribute("aria-label", "Kaydı başlat");
-    document.querySelector("#recordStatus").textContent =
-      "Kayıt hazır. Dinleyebilir, indirebilir veya analiz edebilirsin.";
+    elements.recordButton.setAttribute("aria-label", t("Kaydı başlat"));
+    setText(
+      "#recordStatus",
+      "Kayıt hazır. Dinleyebilir, indirebilir veya analiz edebilirsin.",
+    );
   },
   onError(message) {
     showMessage(message);
@@ -94,20 +101,20 @@ elements.recordButton.addEventListener("click", async () => {
     metronome.stop();
     updateMetronomeButton();
     elements.recordButton.disabled = true;
-    document.querySelector("#recordStatus").textContent =
-      "Mikrofon hazırlanıyor…";
+    setText("#recordStatus", "Mikrofon hazırlanıyor…");
     await recorder.prepare();
     if (document.querySelector("#countIn").checked) {
       await metronome.countIn(bpm, (remaining) => {
-        document.querySelector("#recordStatus").textContent =
-          `Hazır ol: ${remaining}`;
+        setText("#recordStatus", "Hazır ol: {remaining}", { remaining });
       });
     }
     recorder.start();
     elements.recordButton.classList.add("recording");
-    elements.recordButton.setAttribute("aria-label", "Kaydı durdur");
-    document.querySelector("#recordStatus").textContent =
-      "Kaydediliyor · durdurmak için dokun · en fazla 3 dakika";
+    elements.recordButton.setAttribute("aria-label", t("Kaydı durdur"));
+    setText(
+      "#recordStatus",
+      "Kaydediliyor · durdurmak için dokun · en fazla 3 dakika",
+    );
   } catch (error) {
     recorder.dispose();
     setBusy(false);
@@ -116,8 +123,10 @@ elements.recordButton.addEventListener("click", async () => {
         ? error.message
         : "Mikrofon başlatılamadı. Tarayıcı iznini ve mikrofon bağlantını kontrol et.",
     );
-    document.querySelector("#recordStatus").textContent =
-      "Tekrar deneyebilir veya ses dosyası yükleyebilirsin.";
+    setText(
+      "#recordStatus",
+      "Tekrar deneyebilir veya ses dosyası yükleyebilirsin.",
+    );
   } finally {
     elements.recordButton.disabled = false;
   }
@@ -174,9 +183,7 @@ dropzone.addEventListener("drop", (event) => {
 
 function updateMetronomeButton() {
   const button = document.querySelector("#metronomeBtn");
-  button.textContent = metronome.isPlaying
-    ? "Metronomu durdur"
-    : "Metronomu aç";
+  setText(button, metronome.isPlaying ? "Metronomu durdur" : "Metronomu aç");
   button.setAttribute("aria-pressed", String(metronome.isPlaying));
 }
 
@@ -205,7 +212,7 @@ elements.analyzeButton.addEventListener("click", async () => {
     elements.recordButton.disabled = true;
     showMessage();
     elements.results.classList.add("hidden");
-    elements.analyzeButton.textContent = "Ses analiz ediliyor…";
+    setText(elements.analyzeButton, "Ses analiz ediliyor…");
     metronome.stop();
     updateMetronomeButton();
     audioContext = new AudioContext();
@@ -241,39 +248,46 @@ elements.analyzeButton.addEventListener("click", async () => {
     );
   } finally {
     if (audioContext) await audioContext.close();
-    elements.analyzeButton.textContent = "Performansı analiz et ↗";
+    setText(elements.analyzeButton, "Performansı analiz et ↗");
     elements.recordButton.disabled = false;
     setBusy(false);
   }
 });
 
-function renderResults(result, isExample = false) {
-  document.querySelector("#resultLabel").textContent = isExample
-    ? "ÖRNEK VERİ · SENİN KAYDIN DEĞİL"
-    : "ANALİZ TAMAMLANDI";
+function renderResults(result, isExample = false, shouldScroll = true) {
+  latestResult = { result, isExample };
+  setText(
+    "#resultLabel",
+    isExample ? "ÖRNEK VERİ · SENİN KAYDIN DEĞİL" : "ANALİZ TAMAMLANDI",
+  );
   document.querySelector("#score").textContent = result.consistencyScore;
   document.querySelector("#tempoResult").textContent =
     `${Math.round(result.estimatedBpm)} BPM`;
   document.querySelector("#timingResult").textContent =
     `${Math.round(result.intervalDeviationMs)} ms`;
   document.querySelector("#onsetResult").textContent = result.attackCount;
-  document.querySelector("#noteCompare").textContent =
-    "Ses içindeki belirgin başlangıçlar";
+  setText("#noteCompare", "Ses içindeki belirgin başlangıçlar");
   const difference = result.estimatedBpm - result.targetBpm;
-  document.querySelector("#tempoDelta").textContent =
-    `Hedef ${result.targetBpm} BPM · fark ${difference >= 0 ? "+" : ""}${Math.round(difference)} BPM`;
-  document.querySelector("#verdict").textContent =
+  setText("#tempoDelta", "Hedef {target} BPM · fark {difference} BPM", {
+    target: result.targetBpm,
+    difference: `${difference >= 0 ? "+" : ""}${Math.round(difference)}`,
+  });
+  setText(
+    "#verdict",
     result.consistencyScore >= 85
       ? "Nota aralıkların tutarlı."
-      : "Nota aralıkların değişiyor.";
-  document.querySelector("#summary").textContent =
-    "Puan, hedef hızdan bağımsız hesaplanır.";
-  document.querySelector("#insight").textContent = result.lowConfidence
-    ? "Tahmin belirsiz. Suslar, değişen nota süreleri veya arka plan sesleri sonucu etkileyebilir. Eşit aralıklı bir egzersizle tekrar dene."
-    : "Bu sonuç eşit aralıklı notalar varsayar. Nota sıklığı seçimi doğruysa hedef tempo ile karşılaştırabilirsin. Tabla nota eşleştirmesi yapılmaz.";
+      : "Nota aralıkların değişiyor.",
+  );
+  setText("#summary", "Puan, hedef hızdan bağımsız hesaplanır.");
+  setText(
+    "#insight",
+    result.lowConfidence
+      ? "Tahmin belirsiz. Suslar, değişen nota süreleri veya arka plan sesleri sonucu etkileyebilir. Eşit aralıklı bir egzersizle tekrar dene."
+      : "Bu sonuç eşit aralıklı notalar varsayar. Nota sıklığı seçimi doğruysa hedef tempo ile karşılaştırabilirsin. Tabla nota eşleştirmesi yapılmaz.",
+  );
   drawTempoChart(result);
   elements.results.classList.remove("hidden");
-  elements.results.scrollIntoView({ behavior: "smooth" });
+  if (shouldScroll) elements.results.scrollIntoView({ behavior: "smooth" });
 }
 
 function drawTempoChart(result) {
@@ -292,12 +306,13 @@ function drawTempoChart(result) {
     ((bpm - minimum) / (maximum - minimum)) * (canvas.height - padding * 2);
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.font = "14px sans-serif";
-  context.fillStyle = "#666a62";
+  const colors = getComputedStyle(document.documentElement);
+  context.fillStyle = colors.getPropertyValue("--muted").trim();
   context.lineWidth = 1;
   for (let line = 0; line < 4; line++) {
     const bpm = minimum + ((maximum - minimum) * line) / 3;
     const y = yPosition(bpm);
-    context.strokeStyle = "#d8d6cc";
+    context.strokeStyle = colors.getPropertyValue("--chart-grid").trim();
     context.beginPath();
     context.moveTo(padding, y);
     context.lineTo(canvas.width - padding, y);
@@ -305,20 +320,20 @@ function drawTempoChart(result) {
     context.fillText(String(Math.round(bpm)), 2, y + 4);
   }
   context.fillText("BPM", 2, 18);
-  context.fillText("0 sn", padding, canvas.height - 12);
+  context.fillText(`0 ${t("sn")}`, padding, canvas.height - 12);
   context.fillText(
-    `${result.duration.toFixed(1)} sn`,
+    `${result.duration.toFixed(1)} ${t("sn")}`,
     canvas.width - 90,
     canvas.height - 12,
   );
   context.setLineDash([8, 7]);
-  context.strokeStyle = "#899088";
+  context.strokeStyle = colors.getPropertyValue("--chart-target").trim();
   context.beginPath();
   context.moveTo(padding, yPosition(result.targetBpm));
   context.lineTo(canvas.width - padding, yPosition(result.targetBpm));
   context.stroke();
   context.setLineDash([]);
-  context.strokeStyle = "#20483a";
+  context.strokeStyle = colors.getPropertyValue("--chart-line").trim();
   context.lineWidth = 3;
   context.beginPath();
   result.points.forEach((point, index) => {
@@ -355,4 +370,15 @@ window.addEventListener("pagehide", () => {
   recorder.dispose();
   metronome.dispose();
   if (audioUrl) URL.revokeObjectURL(audioUrl);
+});
+
+document.addEventListener("preferenceschange", () => {
+  updateMetronomeButton();
+  elements.recordButton.setAttribute(
+    "aria-label",
+    t(recorder.isRecording ? "Kaydı durdur" : "Kaydı başlat"),
+  );
+  if (latestResult && !elements.results.classList.contains("hidden")) {
+    renderResults(latestResult.result, latestResult.isExample, false);
+  }
 });

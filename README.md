@@ -4,6 +4,8 @@
 
 Gitar egzersizlerini mikrofon veya ses dosyası üzerinden inceleyen tarayıcı uygulaması.
 
+Üst çubuktan Türkçe veya İngilizce arayüzü seçebilir, açık ve karanlık tema arasında geçiş yapabilirsin. Tercihler bu tarayıcıda saklanır. İlk açılışta tema sistem ayarına uyar; varsayılan dil Türkçedir.
+
 ## Başlatma
 
 Node.js 22 veya üzeri kurulu olmalı. Proje klasöründe:
@@ -65,7 +67,9 @@ npm install
 npm start
 ```
 
-Open http://127.0.0.1:4173 in your browser. Microphone access requires localhost or HTTPS. Opening the HTML file directly will not work. The current interface is in Turkish.
+Open http://127.0.0.1:4173 in your browser. Microphone access requires localhost or HTTPS. Opening the HTML file directly will not work.
+
+Use the header controls to switch between Turkish and English, or between light and dark mode. Your preferences are saved in this browser. On first use, the theme follows your system setting and the language defaults to Turkish. Changing language or theme preserves the selected audio and displayed analysis.
 
 ### How to use
 
