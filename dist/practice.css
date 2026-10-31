@@ -1,0 +1,73 @@
+/* Kayıt ve egzersiz araçları */
+.settings {
+  flex-wrap: wrap;
+}
+.settings select {
+  width: 140px;
+}
+.practice-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+}
+.practice-tools label,
+.help {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.light {
+  color: #d6e1d9;
+}
+.message {
+  padding: 18px;
+  background: #fff0e9;
+  color: #732d18;
+  border-radius: 4px;
+}
+.download {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--green);
+  font-weight: 700;
+  cursor: pointer;
+}
+.drag-over {
+  background: #ebf1db;
+}
+.audio-ready {
+  flex-wrap: wrap;
+}
+.audio-ready b {
+  overflow-wrap: anywhere;
+}
+.audio-ready audio {
+  flex: 1;
+  min-width: 220px;
+}
+.score-card > strong {
+  font-size: 34px;
+}
+.recorder canvas {
+  pointer-events: none;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+:focus-visible {
+  outline: 3px solid var(--orange);
+  outline-offset: 4px;
+}
+.dropzone input {
+  display: block;
+  max-width: 100%;
+  margin-bottom: 16px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

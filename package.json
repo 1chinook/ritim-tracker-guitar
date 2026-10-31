@@ -1,0 +1,15 @@
+{
+  "name": "ritim-tracker-guitar",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test",
+    "format": "prettier --write dist scripts test README.md package.json",
+    "format:check": "prettier --check dist scripts test README.md package.json"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}
