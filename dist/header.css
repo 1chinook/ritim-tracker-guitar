@@ -1,0 +1,103 @@
+/* Ortak üst menü: ana sayfa ve editör aynı dil/tema tercihlerini kullanır. */
+.topbar {
+  height: auto;
+  min-height: 84px;
+  padding: 12px 5vw;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.brand {
+  white-space: nowrap;
+}
+.topbar .page-navigation {
+  display: flex;
+  gap: 22px;
+  margin-right: auto;
+}
+.page-navigation a {
+  padding: 10px 0;
+  white-space: nowrap;
+}
+.page-navigation a:hover {
+  color: var(--ink);
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.preference-control {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.preference-control > span {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+.preference-control select {
+  min-width: 115px;
+  padding: 10px 32px 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 13px;
+}
+.prototype-badge {
+  display: block;
+  width: fit-content;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.editor-prototype {
+  margin: 0 6vw 36px;
+  color: var(--muted);
+  font-size: 12px;
+}
+body[data-page="editor"] main {
+  max-width: 1400px;
+  min-height: calc(100vh - 100px);
+  margin: auto;
+}
+body[data-page="editor"] .editor-section {
+  padding-top: 50px;
+}
+body[data-page="editor"] .page-navigation a[href="editor.html"] {
+  color: var(--ink);
+  border-bottom: 2px solid var(--green);
+}
+@media (max-width: 850px) {
+  .topbar {
+    gap: 14px;
+  }
+  .topbar .page-navigation {
+    order: 3;
+    width: 100%;
+    border-top: 1px solid var(--line);
+    padding-top: 4px;
+    margin: 0;
+  }
+}
+@media (max-width: 420px) {
+  .topbar {
+    padding: 12px 18px;
+  }
+  .header-actions {
+    gap: 8px;
+  }
+  .preference-control select {
+    min-width: 90px;
+    padding: 9px 22px 9px 9px;
+  }
+  .brand {
+    font-size: 12px;
+    gap: 6px;
+  }
+}

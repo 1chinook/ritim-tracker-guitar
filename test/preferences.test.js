@@ -76,10 +76,13 @@ test("Dil ve tema değişirken dinamik durumlar ve kullanıcı girdisi korunur",
     assert.equal(elements["#recordStatus"].textContent, "Hazır ol: 3");
     assert.equal(label.textContent, "Çalışma alanı");
     assert.equal(storage.get("ritim-language"), "tr");
-    elements["#themeToggle"].listeners.click();
+    elements["#themeToggle"].value = "dark";
+    elements["#themeToggle"].listeners.change({
+      target: elements["#themeToggle"],
+    });
     assert.equal(document.documentElement.dataset.theme, "dark");
     assert.equal(storage.get("ritim-theme"), "dark");
-    assert.equal(elements["#themeToggle"].attributes["aria-pressed"], "true");
+    assert.equal(elements["#themeToggle"].value, "dark");
     assert.equal(elements["#tabInput"].value, "e|---5-7---|");
     assert.equal(notifications, 2);
   } finally {

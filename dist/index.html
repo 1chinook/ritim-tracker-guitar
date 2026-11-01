@@ -12,27 +12,33 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="practice.css" />
     <link rel="stylesheet" href="themes.css" />
+    <link rel="stylesheet" href="tuner.css" />
+    <link rel="stylesheet" href="header.css" />
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="#"
+      <a class="brand" href="index.html"
         ><span class="brand-mark">R</span><span>RİTİM İZİ</span></a
       >
-      <nav>
-        <a href="#calisma">Çalışma alanı</a><a href="#nasil">Nasıl çalışır?</a>
+      <nav class="page-navigation" aria-label="Sayfalar">
+        <a href="index.html#calisma">Çalışma alanı</a>
+        <a href="editor.html">Tab editörü</a>
       </nav>
       <div class="header-actions">
-        <button class="ghost" id="demoBtn">Örnek sonucu gör</button>
-        <label class="language-control"
-          ><span class="sr-only">Dil</span>
+        <label class="preference-control"
+          ><span>Dil</span>
           <select id="languageSelect" aria-label="Dil">
             <option value="tr">Türkçe</option>
             <option value="en">English</option>
           </select>
         </label>
-        <button class="ghost" id="themeToggle" aria-pressed="false">
-          Karanlık mod
-        </button>
+        <label class="preference-control"
+          ><span>Görünüm</span>
+          <select id="themeToggle" aria-label="Görünüm">
+            <option value="light">Açık</option>
+            <option value="dark">Koyu</option>
+          </select>
+        </label>
       </div>
     </header>
 
@@ -46,6 +52,9 @@
             egzersizlerinde tahmini temponu ve ritim tutarlılığını incele.
           </p>
           <a class="primary" href="#calisma">Analize başla <span>→</span></a>
+          <span class="prototype-badge"
+            >İlkel ilk sürüm · Geliştirme aşamasında</span
+          >
         </div>
         <div class="hero-visual" aria-hidden="true">
           <div class="orbit orbit-a"></div>
@@ -57,189 +66,259 @@
         </div>
       </section>
 
-      <section class="workspace" id="calisma">
+      <section class="tuner-section" id="akort" aria-labelledby="tunerHeading">
         <div class="section-head">
           <div>
-            <p class="eyebrow">PERFORMANS LABORATUVARI</p>
-            <h2>Yeni analiz</h2>
+            <p class="eyebrow">ÖNCE AKORDUNU KONTROL ET</p>
+            <h2 id="tunerHeading">Canlı akort cihazı</h2>
           </div>
-          <div class="steps">
-            <span class="active">1</span><i></i><span>2</span><i></i
-            ><span>3</span>
-          </div>
+          <span class="tuner-reference">A4 = 440 Hz</span>
         </div>
-
-        <div class="grid">
-          <article class="card tab-card">
-            <div class="card-title">
-              <span>01</span>
-              <div>
-                <h3>Tabını ekle</h3>
-                <p>Metin olarak yapıştır veya örneği kullan.</p>
-              </div>
+        <div class="tuner-card">
+          <div class="tuner-controls">
+            <label
+              ><span>Hedef tel</span>
+              <select id="tunerString">
+                <option value="auto">Otomatik (standart akort)</option>
+                <option value="40">6 · E2</option>
+                <option value="45">5 · A2</option>
+                <option value="50">4 · D3</option>
+                <option value="55">3 · G3</option>
+                <option value="59">2 · B3</option>
+                <option value="64">1 · E4</option>
+              </select>
+            </label>
+            <button class="primary" id="tunerToggle" aria-pressed="false">
+              Akort cihazını başlat
+            </button>
+          </div>
+          <div class="tuner-readout">
+            <strong id="tunerNote">—</strong>
+            <div>
+              <span id="tunerFrequency">— Hz</span
+              ><span id="tunerCents">— cent</span>
             </div>
-            <textarea id="tabInput" spellcheck="false" aria-label="Gitar tabı">
+          </div>
+          <p id="tunerTarget" class="help">Hedef tel otomatik seçilir</p>
+          <div
+            id="tunerMeter"
+            class="tuner-meter"
+            role="meter"
+            aria-label="Akort sapması"
+            aria-valuemin="-50"
+            aria-valuemax="50"
+            aria-valuenow="0"
+            data-tuning="waiting"
+          >
+            <span class="tuner-center"></span><span class="tuner-needle"></span>
+          </div>
+          <div class="tuner-scale">
+            <span>−50 cent · pes</span><span>0</span><span>+50 cent · tiz</span>
+          </div>
+          <p id="tunerStatus" class="tuner-status" role="status">
+            Akort cihazı kapalı
+          </p>
+          <p class="help">
+            Tek bir açık teli çal ve sesin oturmasını bekle. Standart akort:
+            E2–A2–D3–G3–B3–E4. Otomatik mod en yakın standart teli seçer;
+            gerekirse hedef teli elle seç. Yeşil alan ±5 cent'tir. Mikrofon sesi
+            kaydedilmez.
+          </p>
+        </div>
+      </section>
+
+      <div id="analysisWorkspace">
+        <section class="workspace" id="calisma">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">PERFORMANS LABORATUVARI</p>
+              <h2>Yeni analiz</h2>
+            </div>
+            <div class="steps">
+              <span class="active">1</span><i></i><span>2</span><i></i
+              ><span>3</span>
+            </div>
+          </div>
+
+          <div class="grid">
+            <article class="card tab-card">
+              <div class="card-title">
+                <span>01</span>
+                <div>
+                  <h3>Tabını ekle</h3>
+                  <p>Metin olarak yapıştır veya örneği kullan.</p>
+                </div>
+              </div>
+              <textarea
+                id="tabInput"
+                spellcheck="false"
+                aria-label="Gitar tabı"
+              >
 e|----------------5-7-8--7-5-----------|
 B|----------5-7-8------------8-7-5-----|
 G|----4-5-7------------------------7-5-|
 D|--7----------------------------------|
 A|-------------------------------------|
 E|-------------------------------------|</textarea
-            >
-            <p class="help">
-              Tab bu sürümde çalışma notu olarak saklanır; sesle nota
-              eşleştirmesi yapılmaz.
-            </p>
-            <div class="settings">
-              <label
-                >Hedef BPM
-                <input
-                  id="bpmInput"
-                  type="number"
-                  value="90"
-                  min="30"
-                  max="240"
-                  required
-              /></label>
-              <label
-                >Vuruş başına nota
-                <select id="noteDensity">
-                  <option value="1">1 (dörtlük)</option>
-                  <option value="2">2 (sekizlik)</option>
-                  <option value="4">4 (onaltılık)</option>
-                </select></label
               >
-            </div>
-            <div class="practice-tools">
-              <button class="ghost" id="metronomeBtn" aria-pressed="false">
-                Metronomu aç
-              </button>
-              <label
-                ><input id="countIn" type="checkbox" checked /> Kayıttan önce 4
-                vuruş say</label
-              >
-            </div>
-            <p class="help">
-              Metronom alıştırma içindir; kayıt başlayınca susar. Analiz için
-              eşit aralıklarla en az 5 nota çal.
-            </p>
-          </article>
-
-          <article class="card audio-card">
-            <div class="card-title">
-              <span>02</span>
-              <div>
-                <h3>Performansını ekle</h3>
-                <p>Canlı kaydet veya mevcut ses dosyanı seç.</p>
-              </div>
-            </div>
-            <div class="source-tabs">
-              <button class="source active" data-mode="record">
-                ● Mikrofon</button
-              ><button class="source" data-mode="upload">↑ Dosya yükle</button>
-            </div>
-            <div id="recordPanel" class="panel active">
-              <div class="recorder">
-                <canvas id="liveCanvas" width="600" height="120"></canvas>
-                <div id="timer">00:00</div>
-                <button
-                  id="recordBtn"
-                  class="record-btn"
-                  aria-label="Kaydı başlat"
+              <p class="help">
+                Tab bu sürümde çalışma notu olarak saklanır; sesle nota
+                eşleştirmesi yapılmaz.
+              </p>
+              <div class="settings">
+                <label
+                  >Hedef BPM
+                  <input
+                    id="bpmInput"
+                    type="number"
+                    value="90"
+                    min="30"
+                    max="240"
+                    required
+                /></label>
+                <label
+                  >Vuruş başına nota
+                  <select id="noteDensity">
+                    <option value="1">1 (dörtlük)</option>
+                    <option value="2">2 (sekizlik)</option>
+                    <option value="4">4 (onaltılık)</option>
+                  </select></label
                 >
-                  <span></span>
+              </div>
+              <div class="practice-tools">
+                <button class="ghost" id="metronomeBtn" aria-pressed="false">
+                  Metronomu aç
                 </button>
-                <p id="recordStatus">Kaydı başlatmak için dokun</p>
+                <label
+                  ><input id="countIn" type="checkbox" checked /> Kayıttan önce
+                  4 vuruş say</label
+                >
               </div>
+              <p class="help">
+                Metronom alıştırma içindir; kayıt başlayınca susar. Analiz için
+                eşit aralıklarla en az 5 nota çal.
+              </p>
+            </article>
+
+            <article class="card audio-card">
+              <div class="card-title">
+                <span>02</span>
+                <div>
+                  <h3>Performansını ekle</h3>
+                  <p>Canlı kaydet veya mevcut ses dosyanı seç.</p>
+                </div>
+              </div>
+              <div class="source-tabs">
+                <button class="source active" data-mode="record">
+                  ● Mikrofon</button
+                ><button class="source" data-mode="upload">
+                  ↑ Dosya yükle
+                </button>
+              </div>
+              <div id="recordPanel" class="panel active">
+                <div class="recorder">
+                  <canvas id="liveCanvas" width="600" height="120"></canvas>
+                  <div id="timer">00:00</div>
+                  <button
+                    id="recordBtn"
+                    class="record-btn"
+                    aria-label="Kaydı başlat"
+                  >
+                    <span></span>
+                  </button>
+                  <p id="recordStatus">Kaydı başlatmak için dokun</p>
+                </div>
+              </div>
+              <div id="uploadPanel" class="panel">
+                <label class="dropzone" id="dropzone"
+                  ><input
+                    id="fileInput"
+                    type="file"
+                    accept="audio/*"
+                    aria-label="Ses dosyası seç"
+                  /><b>Ses dosyanı buraya bırak</b
+                  ><span>veya seçmek için tıkla</span
+                  ><small>WAV, MP3, M4A, OGG</small></label
+                >
+              </div>
+              <div id="audioReady" class="audio-ready hidden">
+                <div>
+                  <b id="audioName">performans.wav</b
+                  ><small id="audioMeta">Ses hazır</small
+                  ><a id="downloadAudio" class="download">Kaydı indir ↓</a>
+                </div>
+                <audio id="audioPlayer" controls></audio>
+              </div>
+            </article>
+          </div>
+          <p class="help light">
+            Sesler bu sayfada işlenir; sunucuya yüklenmez. 3 sn–3 dk, en fazla
+            30 MB. İndirilmeyen kayıt sayfa kapatıldığında kaybolur.
+          </p>
+          <p id="message" class="message hidden" role="alert"></p>
+          <button id="analyzeBtn" class="analyze" disabled>
+            Performansı analiz et <span>↗</span>
+          </button>
+        </section>
+
+        <section id="results" class="results hidden">
+          <div class="result-top">
+            <div>
+              <p class="eyebrow" id="resultLabel">ANALİZ TAMAMLANDI</p>
+              <h2>Performans özeti</h2>
             </div>
-            <div id="uploadPanel" class="panel">
-              <label class="dropzone" id="dropzone"
-                ><input
-                  id="fileInput"
-                  type="file"
-                  accept="audio/*"
-                  aria-label="Ses dosyası seç"
-                /><b>Ses dosyanı buraya bırak</b
-                ><span>veya seçmek için tıkla</span
-                ><small>WAV, MP3, M4A, OGG</small></label
-              >
-            </div>
-            <div id="audioReady" class="audio-ready hidden">
+            <button id="resetBtn" class="ghost">Çalışmaya dön</button>
+          </div>
+          <div class="score-grid">
+            <div class="score-card main-score">
+              <div class="ring">
+                <strong id="score">—</strong><small>/ 100</small>
+              </div>
               <div>
-                <b id="audioName">performans.wav</b
-                ><small id="audioMeta">Ses hazır</small
-                ><a id="downloadAudio" class="download">Kaydı indir ↓</a>
+                <p>RİTİM TUTARLILIĞI</p>
+                <h3 id="verdict"></h3>
+                <span id="summary"></span>
               </div>
-              <audio id="audioPlayer" controls></audio>
             </div>
-          </article>
-        </div>
-        <p class="help light">
-          Sesler bu sayfada işlenir; sunucuya yüklenmez. 3 sn–3 dk, en fazla 30
-          MB. İndirilmeyen kayıt sayfa kapatıldığında kaybolur.
-        </p>
-        <p id="message" class="message hidden" role="alert"></p>
-        <button id="analyzeBtn" class="analyze" disabled>
-          Performansı analiz et <span>↗</span>
-        </button>
-      </section>
-
-      <section id="results" class="results hidden">
-        <div class="result-top">
-          <div>
-            <p class="eyebrow" id="resultLabel">ANALİZ TAMAMLANDI</p>
-            <h2>Performans özeti</h2>
-          </div>
-          <button id="resetBtn" class="ghost">Çalışmaya dön</button>
-        </div>
-        <div class="score-grid">
-          <div class="score-card main-score">
-            <div class="ring">
-              <strong id="score">—</strong><small>/ 100</small>
+            <div class="score-card">
+              <p>TAHMİNİ TEMPO</p>
+              <strong id="tempoResult">—</strong><span id="tempoDelta"></span>
             </div>
-            <div>
-              <p>RİTİM TUTARLILIĞI</p>
-              <h3 id="verdict"></h3>
-              <span id="summary"></span>
+            <div class="score-card">
+              <p>ARALIK DALGALANMASI</p>
+              <strong id="timingResult">—</strong
+              ><span>Tipik nota aralığına göre RMS sapması</span>
+            </div>
+            <div class="score-card">
+              <p>ALGILANAN VURUŞ</p>
+              <strong id="onsetResult">—</strong
+              ><span id="noteCompare">Ses içindeki belirgin başlangıçlar</span>
             </div>
           </div>
-          <div class="score-card">
-            <p>TAHMİNİ TEMPO</p>
-            <strong id="tempoResult">—</strong><span id="tempoDelta"></span>
-          </div>
-          <div class="score-card">
-            <p>ARALIK DALGALANMASI</p>
-            <strong id="timingResult">—</strong
-            ><span>Tipik nota aralığına göre RMS sapması</span>
-          </div>
-          <div class="score-card">
-            <p>ALGILANAN VURUŞ</p>
-            <strong id="onsetResult">—</strong
-            ><span id="noteCompare">Ses içindeki belirgin başlangıçlar</span>
-          </div>
-        </div>
-        <div class="timeline-card">
-          <div class="timeline-head">
-            <div>
-              <h3>Tempo izi</h3>
-              <p>Çizgi, performans boyunca tahmini hız değişimini gösterir.</p>
+          <div class="timeline-card">
+            <div class="timeline-head">
+              <div>
+                <h3>Tempo izi</h3>
+                <p>
+                  Çizgi, performans boyunca tahmini hız değişimini gösterir.
+                </p>
+              </div>
+              <div class="legend">
+                <span><i class="good"></i>Kararlı</span
+                ><span><i class="warn"></i>Sapma</span>
+              </div>
             </div>
-            <div class="legend">
-              <span><i class="good"></i>Kararlı</span
-              ><span><i class="warn"></i>Sapma</span>
-            </div>
+            <canvas
+              id="resultCanvas"
+              width="1200"
+              height="260"
+              role="img"
+              aria-label="Tempo izi"
+            ></canvas>
+            <div class="insight" id="insight"></div>
           </div>
-          <canvas
-            id="resultCanvas"
-            width="1200"
-            height="260"
-            role="img"
-            aria-label="Tempo izi"
-          ></canvas>
-          <div class="insight" id="insight"></div>
-        </div>
-      </section>
-
+        </section>
+      </div>
       <section id="nasil" class="how">
         <p class="eyebrow">NASIL ÇALIŞIR?</p>
         <h2>Üç adımda daha bilinçli pratik.</h2>

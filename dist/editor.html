@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Gitar egzersizlerini yaz ve dinle." />
+    <title>Ritim İzi — Tab Editörü</title>
+    <script src="theme-init.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="practice.css" />
+    <link rel="stylesheet" href="themes.css" />
+    <link rel="stylesheet" href="tab-editor.css" />
+    <link rel="stylesheet" href="header.css" />
+  </head>
+  <body data-page="editor">
+    <header class="topbar">
+      <a class="brand" href="index.html"
+        ><span class="brand-mark">R</span><span>RİTİM İZİ</span></a
+      >
+      <nav class="page-navigation" aria-label="Sayfalar">
+        <a href="index.html#calisma">Çalışma alanı</a>
+        <a href="editor.html">Tab editörü</a>
+      </nav>
+      <div class="header-actions">
+        <label class="preference-control"
+          ><span>Dil</span>
+          <select id="languageSelect" aria-label="Dil">
+            <option value="tr">Türkçe</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <label class="preference-control"
+          ><span>Görünüm</span>
+          <select id="themeToggle" aria-label="Görünüm">
+            <option value="light">Açık</option>
+            <option value="dark">Koyu</option>
+          </select>
+        </label>
+      </div>
+    </header>
+    <main>
+      <section
+        class="editor-section"
+        id="tabEditor"
+        aria-labelledby="editorHeading"
+      >
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">KENDİ EGZERSİZİNİ YAZ</p>
+            <h2 id="editorHeading">Tab editörü</h2>
+          </div>
+        </div>
+        <div class="editor-card">
+          <p class="help">
+            Tel, perde ve süre seçerek nota ekle. Bir adımın numarasına basıp
+            düzenleyebilir veya silebilirsin. Tek sesli, standart akort içindir;
+            ses sentetik önizlemedir.
+          </p>
+          <div class="editor-fields">
+            <label
+              ><span>Tel / sus</span
+              ><select id="editorString" data-editor-control>
+                <option value="6">6 · E2</option>
+                <option value="5">5 · A2</option>
+                <option value="4">4 · D3</option>
+                <option value="3">3 · G3</option>
+                <option value="2">2 · B3</option>
+                <option value="1">1 · E4</option>
+                <option value="rest">Sus</option>
+              </select></label
+            >
+            <label
+              ><span>Perde</span
+              ><input
+                id="editorFret"
+                type="number"
+                value="0"
+                min="0"
+                max="24"
+                step="1"
+                required
+                data-editor-control
+            /></label>
+            <label
+              ><span>Nota süresi</span
+              ><select id="editorDuration" data-editor-control>
+                <option value="0.25">Onaltılık · ¼ vuruş</option>
+                <option value="0.5">Sekizlik · ½ vuruş</option>
+                <option value="1" selected>Dörtlük · 1 vuruş</option>
+                <option value="2">İkilik · 2 vuruş</option>
+                <option value="4">Birlik · 4 vuruş</option>
+              </select></label
+            >
+            <label
+              ><span>Hedef BPM</span
+              ><input
+                id="editorBpm"
+                type="number"
+                value="90"
+                min="30"
+                max="240"
+                step="1"
+                required
+                data-editor-control
+            /></label>
+          </div>
+          <div class="editor-actions">
+            <button class="ghost" id="editorAdd" data-editor-control>
+              Nota / sus ekle
+            </button>
+            <button class="ghost" id="editorUpdate">
+              Seçili adımı güncelle
+            </button>
+            <button class="ghost" id="editorDelete">Seçili adımı sil</button>
+          </div>
+          <div id="editorScroll" class="editor-scroll">
+            <table
+              id="editorTable"
+              aria-label="Düzenlenebilir gitar tabı"
+            ></table>
+          </div>
+          <div class="editor-actions">
+            <button class="primary" id="editorPlay">Tabı çal</button>
+            <button class="ghost" id="editorStop" disabled>Durdur</button>
+            <button class="ghost" id="editorDownload" data-editor-control>
+              Metin tabını indir
+            </button>
+          </div>
+          <p id="editorPlaybackStatus" role="status">Oynatma durdu</p>
+          <p id="editorSummary" class="help"></p>
+          <p id="editorSaveStatus" class="help"></p>
+          <p id="editorMessage" class="message hidden" role="alert"></p>
+          <p class="help">
+            1 vuruş = dörtlük nota. Her sütun bir nota veya sustur; tüm tellerde
+            çizgi olan sütun sus anlamına gelir. Bu editörün tabı henüz
+            performans analizine bağlanmaz.
+          </p>
+        </div>
+      </section>
+      <p class="editor-prototype">İlkel ilk sürüm · Geliştirme aşamasında</p>
+    </main>
+    <script type="module" src="editor-page.js"></script>
+  </body>
+</html>

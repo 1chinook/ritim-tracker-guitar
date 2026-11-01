@@ -1,0 +1,89 @@
+.editor-section {
+  padding: 70px 6vw;
+}
+.editor-section h2 {
+  font:
+    48px Georgia,
+    serif;
+  margin: 0;
+}
+.editor-card {
+  padding: 28px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.editor-fields,
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0;
+}
+.editor-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.editor-fields select,
+.editor-fields input {
+  padding: 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.editor-fields input {
+  width: 95px;
+}
+.editor-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  padding: 10px;
+  margin: 24px 0;
+}
+#editorTable {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-family: ui-monospace, monospace;
+  text-align: center;
+}
+#editorTable td,
+#editorTable th {
+  min-width: 76px;
+  padding: 9px;
+  border-bottom: 1px solid var(--line);
+}
+#editorTable th:first-child {
+  min-width: 110px;
+}
+#editorTable button {
+  border: 1px solid var(--line);
+  padding: 8px;
+  background: var(--paper);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#editorTable .step-selected {
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+#editorTable .step-playing {
+  background: var(--lime);
+  color: #151714;
+}
+#editorTable .step-playing button {
+  background: #d8ff43;
+  color: #151714;
+  border-color: #20483a;
+}
+@media (max-width: 650px) {
+  .editor-section {
+    padding: 50px 20px;
+  }
+  .editor-card {
+    padding: 18px;
+  }
+  .editor-section h2 {
+    font-size: 36px;
+  }
+}

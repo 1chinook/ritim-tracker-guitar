@@ -1,6 +1,7 @@
 import { analyzeRhythm, AnalysisError } from "./rhythm.js";
 import { GuitarRecorder, Metronome } from "./audio.js";
 import { initializePreferences, setText, t } from "./preferences.js";
+import { initializeTuner } from "./tuner.js";
 
 initializePreferences();
 let latestResult = null;
@@ -28,7 +29,7 @@ function setBusy(busy) {
   isBusy = busy;
   document
     .querySelectorAll(
-      ".source, #fileInput, #bpmInput, #noteDensity, #metronomeBtn, #countIn, #demoBtn",
+      ".source, #fileInput, #bpmInput, #noteDensity, #metronomeBtn, #countIn, #tunerToggle",
     )
     .forEach((control) => {
       control.disabled = busy;
@@ -83,6 +84,21 @@ const recorder = new GuitarRecorder({
     showMessage(message);
     setBusy(false);
     elements.recordButton.classList.remove("recording");
+  },
+});
+
+const tuner = initializeTuner({
+  onStart() {
+    elements.player.pause();
+    metronome.stop();
+    updateMetronomeButton();
+    setBusy(true);
+    elements.recordButton.disabled = true;
+    document.querySelector("#tunerToggle").disabled = false;
+  },
+  onStop() {
+    setBusy(false);
+    elements.recordButton.disabled = false;
   },
 });
 
@@ -254,12 +270,9 @@ elements.analyzeButton.addEventListener("click", async () => {
   }
 });
 
-function renderResults(result, isExample = false, shouldScroll = true) {
-  latestResult = { result, isExample };
-  setText(
-    "#resultLabel",
-    isExample ? "ÖRNEK VERİ · SENİN KAYDIN DEĞİL" : "ANALİZ TAMAMLANDI",
-  );
+function renderResults(result, shouldScroll = true) {
+  latestResult = result;
+  setText("#resultLabel", "ANALİZ TAMAMLANDI");
   document.querySelector("#score").textContent = result.consistencyScore;
   document.querySelector("#tempoResult").textContent =
     `${Math.round(result.estimatedBpm)} BPM`;
@@ -344,29 +357,12 @@ function drawTempoChart(result) {
   context.stroke();
 }
 
-document.querySelector("#demoBtn").addEventListener("click", () => {
-  renderResults(
-    {
-      estimatedBpm: 92,
-      targetBpm: 90,
-      consistencyScore: 94,
-      intervalDeviationMs: 35,
-      attackCount: 16,
-      duration: 11,
-      lowConfidence: false,
-      points: [89, 90, 92, 91, 94, 93, 92].map((bpm, index) => ({
-        time: index * 1.4 + 1,
-        bpm,
-      })),
-    },
-    true,
-  );
-});
 document.querySelector("#resetBtn").addEventListener("click", () => {
   elements.results.classList.add("hidden");
   document.querySelector("#calisma").scrollIntoView({ behavior: "smooth" });
 });
 window.addEventListener("pagehide", () => {
+  tuner.stop();
   recorder.dispose();
   metronome.dispose();
   if (audioUrl) URL.revokeObjectURL(audioUrl);
@@ -379,6 +375,6 @@ document.addEventListener("preferenceschange", () => {
     t(recorder.isRecording ? "Kaydı durdur" : "Kaydı başlat"),
   );
   if (latestResult && !elements.results.classList.contains("hidden")) {
-    renderResults(latestResult.result, latestResult.isExample, false);
+    renderResults(latestResult, false);
   }
 });

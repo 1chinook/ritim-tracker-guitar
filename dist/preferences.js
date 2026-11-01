@@ -43,9 +43,13 @@ function renderTranslations() {
   }
   document.documentElement.lang = language;
   document.title =
-    language === "en"
-      ? "Ritim İzi — Guitar Practice Analysis"
-      : "Ritim İzi — Gitar Performans Analizi";
+    document.body.dataset?.page === "editor"
+      ? language === "en"
+        ? "Ritim İzi — Tab Editor"
+        : "Ritim İzi — Tab Editörü"
+      : language === "en"
+        ? "Ritim İzi — Guitar Practice Analysis"
+        : "Ritim İzi — Gitar Performans Analizi";
   document.querySelector('meta[name="description"]').content =
     language === "en"
       ? "Record your guitar practice and explore estimated tempo and rhythmic consistency."
@@ -54,11 +58,9 @@ function renderTranslations() {
 }
 
 function updateThemeButton() {
-  const isDark = document.documentElement.dataset.theme === "dark";
-  const button = document.querySelector("#themeToggle");
-  button.textContent = t(isDark ? "Açık mod" : "Karanlık mod");
-  button.setAttribute("aria-label", t("Karanlık mod"));
-  button.setAttribute("aria-pressed", String(isDark));
+  const selector = document.querySelector("#themeToggle");
+  selector.value = document.documentElement.dataset.theme;
+  selector.setAttribute("aria-label", t("Görünüm"));
 }
 
 export function initializePreferences() {
@@ -83,9 +85,9 @@ export function initializePreferences() {
     renderTranslations();
     document.dispatchEvent(new Event("preferenceschange"));
   });
-  document.querySelector("#themeToggle").addEventListener("click", () => {
+  document.querySelector("#themeToggle").addEventListener("change", (event) => {
     const root = document.documentElement;
-    root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+    root.dataset.theme = event.target.value === "dark" ? "dark" : "light";
     savePreference("ritim-theme", root.dataset.theme);
     updateThemeButton();
     document.dispatchEvent(new Event("preferenceschange"));
