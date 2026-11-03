@@ -25,7 +25,11 @@ Tarayıcıda http://127.0.0.1:4173 adresini aç. Mikrofon için localhost veya H
 
 ### Tab editörü ve oynatma
 
-Tel (1 en ince, 6 en kalın), 0–24 perde ve nota süresi seçerek en fazla 128 adımlık tek sesli egzersiz yazabilirsin. “Sus” seçeneği sessiz bir adım ekler. Adım başlığını seçip güncelleme veya silme düğmesini kullan. Bir vuruş dörtlük notadır; sekizlik yarım, onaltılık çeyrek vuruştur.
+Hızlı giriş: tablodaki bir telin `+` hücresine bas, sonra perdeyi hızlı seçim düğmelerinden seç veya klavyeyle yaz. Mevcut bir notayı başka teldeki hücreye tıklayarak taşıyabilirsin. Alan değişiklikleri seçili notaya otomatik uygulanır. “Yeni nota” düğmesi ekleme moduna döner. “Geri al / Yinele” son 50 nota düzenlemesini kapsar; “Seçili notayı çoğalt” aynı notayı hemen arkasına ekler.
+
+Tab üzerindeyken sayılar perdeyi girer (10–24 için iki rakamı kısa aralıkla yaz), sol/sağ adımlar arasında, yukarı/aşağı teller arasında gezinir. Delete/Backspace seçili adımı siler. Ctrl/⌘ Z geri alır, Ctrl/⌘ Shift Z yineler. Metin ve sayı alanlarında tarayıcının normal klavye davranışı korunur.
+
+Tel (1 en ince, 6 en kalın), 0–24 perde ve nota süresi seçerek en fazla 128 adımlık tek sesli egzersiz yazabilirsin. “Sus” seçeneği sessiz bir adım ekler. Seçili notanın alanları değiştirildiğinde düzenleme otomatik uygulanır; silme düğmesi seçili adımı kaldırır. Bir vuruş dörtlük notadır; sekizlik yarım, onaltılık çeyrek vuruştur.
 
 Editörün kendi BPM alanı ve oynat/durdur düğmeleri vardır. Oynatma sırasında çalınan sütun vurgulanır. Ses, standart akortta sentetik bir önizlemedir. Mikrofon, akort cihazı ve metronom ile eşzamanlı çalıştırılmaz. Düzenlemeler bu tarayıcıya otomatik kaydedilir; metin tabı olarak da indirilebilir. İndirilen metindeki `Beats` satırı her sütunun vuruş süresini korur. Metin dosyasını yeniden içe aktarma henüz yoktur. Editörün nota zaman çizelgesi henüz performans karşılaştırmasına bağlanmaz.
 
@@ -54,6 +58,8 @@ Tempo, tipik nota başlangıcı aralığı ve seçilen nota sıklığı üzerind
 Sonuçlar yalnızca yüklenen veya kaydedilen sesten hesaplanır. Sessiz, çok kısa veya okunamayan kayıtlara sonuç uydurulmaz.
 
 ## Kod düzeni
+
+Gelişmiş tab editörü için ilk veri altyapısı eklendi: sürümlü belge, akor/sus modeli, teknik bilgileri ve ortak zaman çizelgesi. Bu model henüz arayüze veya ses motoruna bağlanmadı. Taslaklar otomatik dönüştürülüp üzerine yazılmaz. Ayrıntılar: [veri modeli ve aşamalı plan](docs/score-format.md).
 
 - `dist/app.js`: Ekran olayları, dosya seçimi ve sonuç görünümü.
 - `dist/audio.js`: Mikrofon, kayıt yaşam döngüsü ve metronom.
@@ -97,6 +103,10 @@ Use the header controls to switch between Turkish and English, or between light 
 
 #### Tab editor and playback
 
+Quick entry: click a string's `+` cell, then select a fret from the quick buttons or type it on your keyboard. Click another string in an existing column to move that note. Field changes apply automatically to the selected note. “New note” returns to insert mode. Undo/redo covers the last 50 note edits; duplicating a note inserts a copy immediately after it.
+
+When the tab has focus, digits enter frets (type two digits quickly for 10–24), left/right arrows navigate steps, and up/down arrows navigate strings. Delete/Backspace removes the selected step. Ctrl/⌘ Z undoes and Ctrl/⌘ Shift Z redoes. Text and number fields retain their normal browser keyboard behavior.
+
 Build a single-note exercise with up to 128 steps. Choose a string (1 is highest, 6 is lowest), fret 0–24, and duration, or select a rest. Select a step heading to update or delete it. One beat is a quarter note; eighth notes last half a beat and sixteenth notes last a quarter beat.
 
 The editor has its own BPM and play/stop controls, with a highlighted playback cursor. Audio is a synthesized preview in standard tuning. Playback runs separately from recording, the tuner, and the metronome. Edits are saved automatically in this browser. Download a text tab to keep a copy; its `Beats` line preserves each column's duration. Text import is not implemented yet. The editor's timed note sequence is not yet connected to performance comparison.
@@ -128,6 +138,8 @@ This version provides approximate rhythm analysis for single-note exercises with
 Results are calculated only from uploaded or recorded audio. Silent, short, or unreadable recordings produce an error instead of fabricated results.
 
 ### Project structure
+
+The advanced editor foundation now includes a versioned score document, chord/rest data, technique metadata, and a shared timeline compiler. It is not yet connected to the editor UI or audio engine and does not overwrite existing drafts. See the [format and incremental plan](docs/score-format.md).
 
 - `dist/app.js`: interface events, file selection, and result rendering.
 - `dist/audio.js`: microphone recording, resource cleanup, and metronome.

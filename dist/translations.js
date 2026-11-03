@@ -1,5 +1,24 @@
 // Türkçe metinler aynı zamanda çeviri anahtarıdır. Dinamik değerler {ad} ile belirtilir.
 export const english = {
+  "Tablodaki + işaretine bas, ardından perde numarasını yaz veya aşağıdan seç. Notaya tıklayarak düzenle; değişiklikler otomatik uygulanır.":
+    "Click + in the tab, then type a fret number or choose one below. Click a note to edit it; changes apply automatically.",
+  "Yeni nota +": "New note +",
+  "Sus ekle": "Add rest",
+  "↶ Geri al": "↶ Undo",
+  "↷ Yinele": "↷ Redo",
+  "Seçili notayı çoğalt": "Duplicate selected note",
+  "Seçili adım: {step} · Değişiklikler otomatik uygulanır.":
+    "Selected step: {step} · Changes apply automatically.",
+  "Yeni nota · Tablodaki + işaretine basarak ekle.":
+    "New note · Click + in the tab to add one.",
+  "{step}. adım, {string}. tel, perde {fret}":
+    "Step {step}, string {string}, fret {fret}",
+  "{string}. tele yeni nota ekle": "Add a note on string {string}",
+  "Hızlı perde seçimi": "Quick fret selection",
+  "13–24 için perde alanını veya klavyeyi kullan.":
+    "For 13–24, use the fret field or keyboard.",
+  "Klavye: sayılar = perde · ← → = adım · ↑ ↓ = tel · Delete = sil · Ctrl/⌘ Z = geri al":
+    "Keyboard: digits = fret · ← → = step · ↑ ↓ = string · Delete = remove · Ctrl/⌘ Z = undo",
   Sayfalar: "Pages",
   Görünüm: "Appearance",
   Açık: "Light",

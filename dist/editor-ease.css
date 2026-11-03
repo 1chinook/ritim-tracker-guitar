@@ -1,0 +1,118 @@
+/* Tıklanabilir teller ve her zaman görünen yeni nota sütunu. */
+.editor-history {
+  gap: 8px;
+}
+.editor-history .ghost {
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+.selection-hint {
+  padding: 12px 16px;
+  border-left: 3px solid var(--green);
+  background: var(--paper);
+  font-size: 14px;
+}
+.fret-picker {
+  margin: 22px 0 12px;
+}
+.fret-picker > span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+#editorFrets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+#editorFrets button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 700;
+}
+#editorFrets button:hover {
+  border-color: var(--green);
+}
+.fret-picker small,
+.editor-shortcuts {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.fret-picker small {
+  display: block;
+  margin-top: 8px;
+}
+#editorTable td {
+  padding: 2px;
+  background-image: linear-gradient(
+    transparent calc(50% - 1px),
+    var(--line) 50%,
+    transparent calc(50% + 1px)
+  );
+}
+#editorTable td .tab-cell {
+  width: 100%;
+  min-height: 42px;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font-size: 17px;
+}
+#editorTable .tab-cell:hover {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+#editorTable th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--card);
+  z-index: 1;
+  min-width: 66px;
+}
+#editorTable tr > :last-child {
+  position: sticky;
+  right: 0;
+  background: var(--card);
+  border-left: 1px solid var(--line);
+}
+#editorTable .add-cell {
+  color: var(--green);
+  font-size: 24px;
+}
+#editorTable .step-selected .tab-cell {
+  font-weight: 800;
+}
+#editorTable .step-playing .tab-cell {
+  color: #151714;
+  background: var(--lime);
+}
+.editor-scroll {
+  position: relative;
+}
+.editor-fields {
+  gap: 16px;
+}
+.editor-fields label {
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (max-width: 650px) {
+  .editor-shortcuts {
+    display: none;
+  }
+  #editorFrets button {
+    width: 38px;
+    height: 42px;
+  }
+  .editor-history {
+    gap: 6px;
+  }
+}

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="themes.css" />
     <link rel="stylesheet" href="tab-editor.css" />
     <link rel="stylesheet" href="header.css" />
+    <link rel="stylesheet" href="editor-ease.css" />
   </head>
   <body data-page="editor">
     <header class="topbar">
@@ -52,10 +53,24 @@
         </div>
         <div class="editor-card">
           <p class="help">
-            Tel, perde ve süre seçerek nota ekle. Bir adımın numarasına basıp
-            düzenleyebilir veya silebilirsin. Tek sesli, standart akort içindir;
-            ses sentetik önizlemedir.
+            Tablodaki + işaretine bas, ardından perde numarasını yaz veya
+            aşağıdan seç. Notaya tıklayarak düzenle; değişiklikler otomatik
+            uygulanır.
           </p>
+          <div class="editor-actions editor-history">
+            <button class="ghost" id="editorNew" data-editor-control>
+              Yeni nota +
+            </button>
+            <button class="ghost" id="editorRest" data-editor-control>
+              Sus ekle
+            </button>
+            <button class="ghost" id="editorUndo">↶ Geri al</button>
+            <button class="ghost" id="editorRedo">↷ Yinele</button>
+            <button class="ghost" id="editorDuplicate">
+              Seçili notayı çoğalt
+            </button>
+          </div>
+          <p id="editorSelection" class="selection-hint" role="status"></p>
           <div class="editor-fields">
             <label
               ><span>Tel / sus</span
@@ -108,11 +123,35 @@
             <button class="ghost" id="editorAdd" data-editor-control>
               Nota / sus ekle
             </button>
-            <button class="ghost" id="editorUpdate">
-              Seçili adımı güncelle
-            </button>
             <button class="ghost" id="editorDelete">Seçili adımı sil</button>
           </div>
+          <div class="fret-picker">
+            <span>Hızlı perde seçimi</span>
+            <div id="editorFrets">
+              <button type="button" data-fret="0" data-editor-control>0</button
+              ><button type="button" data-fret="1" data-editor-control>1</button
+              ><button type="button" data-fret="2" data-editor-control>2</button
+              ><button type="button" data-fret="3" data-editor-control>3</button
+              ><button type="button" data-fret="4" data-editor-control>4</button
+              ><button type="button" data-fret="5" data-editor-control>5</button
+              ><button type="button" data-fret="6" data-editor-control>6</button
+              ><button type="button" data-fret="7" data-editor-control>7</button
+              ><button type="button" data-fret="8" data-editor-control>8</button
+              ><button type="button" data-fret="9" data-editor-control>9</button
+              ><button type="button" data-fret="10" data-editor-control>
+                10</button
+              ><button type="button" data-fret="11" data-editor-control>
+                11</button
+              ><button type="button" data-fret="12" data-editor-control>
+                12
+              </button>
+            </div>
+            <small>13–24 için perde alanını veya klavyeyi kullan.</small>
+          </div>
+          <p class="editor-shortcuts">
+            Klavye: sayılar = perde · ← → = adım · ↑ ↓ = tel · Delete = sil ·
+            Ctrl/⌘ Z = geri al
+          </p>
           <div id="editorScroll" class="editor-scroll">
             <table
               id="editorTable"
