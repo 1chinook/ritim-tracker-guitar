@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { initializeTabEditor } from "../dist/tab-editor.js";
 
-test("Tab hücresi, iki basamaklı perde girişi ve geri alma aynı taslağı günceller", () => {
+test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı günceller", async () => {
   const previous = {
     document: globalThis.document,
     localStorage: globalThis.localStorage,
@@ -17,6 +17,11 @@ test("Tab hücresi, iki basamaklı perde girişi ve geri alma aynı taslağı g�
     value = "";
     disabled = false;
     className = "";
+    style = { minWidth: "" };
+    get options() {
+      return this.children.filter((child) => child.tag === "option");
+    }
+    scrollIntoView() {}
     classList = { toggle() {}, contains: () => false };
     constructor(tag = "div") {
       this.tag = tag;
@@ -58,8 +63,9 @@ test("Tab hücresi, iki basamaklı perde girişi ve geri alma aynı taslağı g�
       return selector.split(", ").includes(this.tag);
     }
     closest(selector) {
-      return (selector === ".tab-cell" &&
-        this.className.includes("tab-cell")) ||
+      return (selector === "[data-event]" &&
+        this.dataset.event !== undefined) ||
+        (selector === ".tab-cell" && this.className.includes("tab-cell")) ||
         (selector === "[data-fret]" && this.dataset.fret !== undefined)
         ? this
         : this.parent?.closest(selector);
@@ -70,7 +76,7 @@ test("Tab hücresi, iki basamaklı perde girişi ve geri alma aynı taslağı g�
           ? node.control
           : selector === "tr"
             ? node.tag === "tr"
-            : [...selector.matchAll(/data-(step|string)="(\d+)"/g)].every(
+            : [...selector.matchAll(/data-(event|string)="([^"]+)"/g)].every(
                 (match) => String(node.dataset[match[1]]) === match[2],
               );
       return this.children.flatMap((child) => [
@@ -115,12 +121,28 @@ test("Tab hücresi, iki basamaklı perde girişi ve geri alma aynı taslağı g�
     "editorFrets",
     "editorDownload",
     "editorPlaybackStatus",
+    "editorMeter",
+    "editorPitchTechnique",
+    "editorBend",
+    "editorTargetFret",
+    "editorVibrato",
+    "editorVibratoDepth",
+    "editorVibratoRate",
+    "editorPalmMute",
+    "editorDeadNote",
+    "editorRemoveVoice",
+    "editorJson",
+    "editorImport",
   ];
   const elements = Object.fromEntries(ids.map((id) => [id, new Element()]));
   Object.assign(elements.editorBpm, { value: "90", tag: "input" });
   Object.assign(elements.editorString, { value: "6", tag: "select" });
   Object.assign(elements.editorFret, { value: "0", tag: "input" });
-  Object.assign(elements.editorDuration, { value: "1", tag: "select" });
+  Object.assign(elements.editorDuration, { value: "960", tag: "select" });
+  elements.editorMeter.value = "4/4";
+  elements.editorPitchTechnique.value = "none";
+  elements.editorBend.value = "1";
+  elements.editorTargetFret.value = "2";
   globalThis.document = {
     activeElement: null,
     querySelector: (selector) => elements[selector.slice(1)],
@@ -131,16 +153,18 @@ test("Tab hücresi, iki basamaklı perde girişi ve geri alma aynı taslağı g�
     getItem: (key) => saved.get(key) ?? null,
     setItem: (key, value) => saved.set(key, value),
   };
-  const notes = () => JSON.parse(saved.get("ritim-tab-draft-v1")).notes;
+  const notes = () => JSON.parse(saved.get("ritim-score-v1")).events;
   try {
     initializeTabEditor({ onStart() {}, onStop() {} });
     elements.editorNew.click();
     const addCell = elements.editorTable.querySelector(
-      '[data-step="5"][data-string="1"]',
+      '[data-event="new"][data-string="1"]',
     );
     elements.editorTable.fire("click", { target: addCell });
     assert.equal(notes().length, 6);
-    assert.deepEqual(notes()[5], { string: 1, fret: 0, beats: 1 });
+    assert.deepEqual(notes()[5].notes, [
+      { string: 1, fret: 0, techniques: [] },
+    ]);
     const key = (value) =>
       elements.tabEditor.fire("keydown", {
         target: document.activeElement,
@@ -148,13 +172,56 @@ test("Tab hücresi, iki basamaklı perde girişi ve geri alma aynı taslağı g�
       });
     key("1");
     key("2");
-    assert.equal(notes()[5].fret, 12);
+    assert.equal(notes()[5].notes[0].fret, 12);
     elements.editorUndo.click();
-    assert.equal(notes()[5].fret, 1);
+    assert.equal(notes()[5].notes[0].fret, 1);
     elements.editorRedo.click();
-    assert.equal(notes()[5].fret, 12);
+    assert.equal(notes()[5].notes[0].fret, 12);
+    const currentId = notes()[5].id;
+    const chordCell = elements.editorTable.querySelector(
+      `[data-event="${currentId}"][data-string="2"]`,
+    );
+    elements.editorTable.fire("click", { target: chordCell });
+    assert.equal(
+      notes()[5].notes.length,
+      2,
+      "İkinci tele ekleme önceki sesi silmemeli",
+    );
+    elements.editorPitchTechnique.value = "bend";
+    elements.editorBend.value = "2";
+    elements.editorPitchTechnique.fire("change");
+    assert.deepEqual(notes()[5].notes[1].techniques, [
+      { type: "bend", semitones: 2 },
+    ]);
+    elements.editorVibrato.checked = true;
+    elements.editorVibrato.fire("change");
+    assert.equal(notes()[5].notes[1].techniques.length, 2);
+    elements.editorRemoveVoice.click();
+    assert.equal(notes()[5].notes.length, 1);
+    elements.editorUndo.click();
+    assert.equal(notes()[5].notes.length, 2);
     elements.editorRest.click();
-    assert.deepEqual(notes().at(-1), { string: null, fret: null, beats: 1 });
+    assert.deepEqual(notes().at(-1).notes, []);
+    assert.equal(notes().at(-1).durationTicks, 960);
+    const beforeImport = saved.get("ritim-score-v1");
+    const imported = JSON.parse(beforeImport);
+    imported.bpm = 120;
+    elements.editorImport.files = [
+      { size: 1000, text: async () => JSON.stringify(imported) },
+    ];
+    await elements.editorImport.fire("change");
+    assert.equal(JSON.parse(saved.get("ritim-score-v1")).bpm, 120);
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), beforeImport);
+    elements.editorImport.files = [
+      { size: 20, text: async () => '{"format":"ritim-score","version":999}' },
+    ];
+    await elements.editorImport.fire("change");
+    assert.equal(
+      saved.get("ritim-score-v1"),
+      beforeImport,
+      "Geçersiz dosya çalışan taslağı bozmamalı",
+    );
   } finally {
     for (const [name, value] of Object.entries(previous)) {
       if (value === undefined) delete globalThis[name];

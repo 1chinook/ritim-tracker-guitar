@@ -1,391 +1,421 @@
 import {
-  validateNotes,
-  createTimeline,
-  exportTextTab,
-  maximumNotes,
-} from "./tab-model.js";
-import { TabHistory } from "./tab-history.js";
-import { TabPlayer } from "./tab-player.js";
-import { setText, t } from "./preferences.js";
+  migrateLegacyDraft,
+  parseScore,
+  serializeScore,
+} from "./score-document.js";
+import { ScoreSession } from "./score-session.js";
+import { loadScoreDraft, saveScoreDraft } from "./score-storage.js";
+import { splitMeasures, exportScoreText, midiLabel } from "./score-notation.js";
+import { ScorePlayer } from "./score-player.js";
+import { renderScoreGrid } from "./score-grid.js";
+import { compileScore } from "./score-timeline.js";
+import { setText } from "./preferences.js";
 
-const storageKey = "ritim-tab-draft-v1";
-const example = [
-  { string: 6, fret: 0, beats: 1 },
-  { string: 6, fret: 3, beats: 0.5 },
-  { string: 5, fret: 0, beats: 0.5 },
-  { string: null, fret: null, beats: 1 },
-  { string: 5, fret: 3, beats: 1 },
-];
+const example = migrateLegacyDraft({
+  version: 1,
+  bpm: 90,
+  notes: [
+    { string: 6, fret: 0, beats: 1 },
+    { string: 6, fret: 3, beats: 0.5 },
+    { string: 5, fret: 0, beats: 0.5 },
+    { string: null, fret: null, beats: 1 },
+    { string: 5, fret: 3, beats: 1 },
+  ],
+});
 
 export function initializeTabEditor({ onStart, onStop }) {
-  const section = document.querySelector("#tabEditor");
-  const table = document.querySelector("#editorTable");
-  const bpm = document.querySelector("#editorBpm");
-  const stringInput = document.querySelector("#editorString");
-  const fretInput = document.querySelector("#editorFret");
-  const durationInput = document.querySelector("#editorDuration");
-  let notes = structuredClone(example);
-  let selected = -1;
-  let active = -1;
+  const find = (id) => document.querySelector(`#${id}`);
+  const section = find("tabEditor");
+  const grid = find("editorTable");
+  const fields = {
+    string: find("editorString"),
+    fret: find("editorFret"),
+    duration: find("editorDuration"),
+    bpm: find("editorBpm"),
+    meter: find("editorMeter"),
+    pitch: find("editorPitchTechnique"),
+    bend: find("editorBend"),
+    target: find("editorTargetFret"),
+    vibrato: find("editorVibrato"),
+    depth: find("editorVibratoDepth"),
+    rate: find("editorVibratoRate"),
+    mute: find("editorPalmMute"),
+    dead: find("editorDeadNote"),
+  };
+  let session = new ScoreSession(example);
+  let selected = null;
+  let active = null;
   let unavailable = false;
-  let saved = true;
-  const history = new TabHistory();
+  let loading = false;
+  let storageProtected = false;
   let digitBuffer = "";
   let digitTime = 0;
-
+  let initialMessage = "";
   try {
-    const draft = JSON.parse(localStorage.getItem(storageKey));
-    if (draft?.version === 1) {
-      const restored = validateNotes(draft.notes);
-      createTimeline(restored, draft.bpm);
-      notes = restored;
-      bpm.value = draft.bpm;
-    }
+    const draft = loadScoreDraft(localStorage);
+    if (draft) session = new ScoreSession(draft.score);
   } catch {
-    /* Bozuk veya erişilemeyen taslak yerine örnekle başla. */
+    storageProtected = true;
+    initialMessage =
+      "Taslak okunamadı. Eski kayıt korunuyor; yeni çalışmanı JSON olarak indir.";
   }
+
+  const selectedEvent = () =>
+    session.document.events.find((event) => event.id === selected);
+  const selectedVoice = () =>
+    selectedEvent()?.notes.find(
+      (note) => note.string === Number(fields.string.value),
+    );
+  const blocked = () => unavailable || loading || player.playing;
 
   function message(source = "") {
     setText("#editorMessage", source);
-    document
-      .querySelector("#editorMessage")
-      .classList.toggle("hidden", !source);
+    find("editorMessage").classList.toggle("hidden", !source);
   }
 
   function save() {
     try {
-      const tempo = Number(bpm.value);
-      createTimeline(notes, tempo);
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({ version: 1, bpm: tempo, notes }),
-      );
-      saved = true;
+      if (storageProtected) throw new Error("Protected");
+      saveScoreDraft(localStorage, session.document);
+      setText("#editorSaveStatus", "Taslak bu tarayıcıya kaydedildi.");
     } catch {
-      saved = false;
+      setText(
+        "#editorSaveStatus",
+        "Taslak kaydedilemedi. Kaybetmemek için indir.",
+      );
     }
-    setText(
-      "#editorSaveStatus",
-      saved
-        ? "Taslak bu tarayıcıya kaydedildi."
-        : "Taslak kaydedilemedi. Kaybetmemek için indir.",
-    );
   }
 
-  function render() {
-    const focusedCell = table.contains(document.activeElement)
+  function ensureOption(select, value, label) {
+    if (![...select.options].some((option) => option.value === String(value))) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      select.append(option);
+    }
+    select.value = value;
+  }
+
+  function syncFields() {
+    for (const option of fields.string.options) {
+      const string = Number(option.value);
+      if (string >= 1 && string <= 6)
+        option.textContent = `${string} · ${midiLabel(session.document.tuning[string - 1])}`;
+    }
+    const event = selectedEvent();
+    const note = selectedVoice();
+    if (event)
+      ensureOption(
+        fields.duration,
+        event.durationTicks,
+        `${event.durationTicks} tick`,
+      );
+    if (note) fields.fret.value = note.fret;
+    const effects = note?.techniques ?? [];
+    const pitch = effects.find((effect) =>
+      ["bend", "slide", "hammerOn", "pullOff"].includes(effect.type),
+    );
+    const vibrato = effects.find((effect) => effect.type === "vibrato");
+    fields.pitch.value = pitch?.type ?? "none";
+    fields.bend.value = pitch?.semitones ?? 1;
+    fields.target.value =
+      pitch?.targetFret ?? Math.min(24, Number(fields.fret.value) + 2);
+    fields.vibrato.checked = Boolean(vibrato);
+    fields.depth.value = vibrato?.depthCents ?? 30;
+    fields.rate.value = vibrato?.rateHz ?? 5;
+    fields.mute.checked = effects.some((effect) => effect.type === "palmMute");
+    fields.dead.checked = effects.some((effect) => effect.type === "deadNote");
+  }
+
+  function readVoice() {
+    if (fields.string.value === "rest") return null;
+    if (!fields.fret.checkValidity())
+      throw new Error("Perde 0–24 arasında bir tam sayı olmalı.");
+    const techniques = [];
+    if (fields.dead.checked) techniques.push({ type: "deadNote" });
+    else {
+      if (fields.pitch.value === "bend")
+        techniques.push({ type: "bend", semitones: Number(fields.bend.value) });
+      if (["slide", "hammerOn", "pullOff"].includes(fields.pitch.value))
+        techniques.push({
+          type: fields.pitch.value,
+          targetFret: Number(fields.target.value),
+        });
+      if (fields.vibrato.checked)
+        techniques.push({
+          type: "vibrato",
+          depthCents: Number(fields.depth.value),
+          rateHz: Number(fields.rate.value),
+        });
+      if (fields.mute.checked) techniques.push({ type: "palmMute" });
+    }
+    return {
+      string: Number(fields.string.value),
+      fret: Number(fields.fret.value),
+      techniques,
+    };
+  }
+
+  function render(focus = null) {
+    const focused = grid.contains(document.activeElement)
       ? document.activeElement
       : null;
-    const focusStep = focusedCell?.dataset.step;
-    const focusString = focusedCell?.dataset.string;
-    table.replaceChildren();
-    const header = document.createElement("tr");
-    const label = document.createElement("th");
-    label.textContent = t("Adım / vuruş");
-    header.append(label);
-    notes.forEach((note, index) => {
-      const cell = document.createElement("th");
-      const button = document.createElement("button");
-      button.type = "button";
-      button.dataset.step = index;
-      button.textContent = `${index + 1} · ${note.beats}`;
-      button.setAttribute(
-        "aria-label",
-        t("{step}. adımı düzenle", { step: index + 1 }),
-      );
-      button.setAttribute("aria-pressed", String(selected === index));
-      button.disabled = unavailable || player.playing;
-      button.addEventListener("click", () => {
-        selected = index;
-        stringInput.value = note.string ?? "rest";
-        fretInput.value = note.fret ?? 0;
-        durationInput.value = note.beats;
-        digitBuffer = "";
-        render();
-      });
-      cell.append(button);
-      cell.classList.toggle("step-selected", index === selected);
-      cell.classList.toggle("step-playing", index === active);
-      header.append(cell);
+    const restore =
+      focus ??
+      (focused
+        ? { id: focused.dataset.event, string: focused.dataset.string }
+        : null);
+    renderScoreGrid(grid, session.document, {
+      selected,
+      active,
+      disabled: blocked(),
+      string: fields.string.value,
     });
-    const addHeader = document.createElement("th");
-    addHeader.textContent = "+";
-    header.append(addHeader);
-    table.append(header);
-    ["e", "B", "G", "D", "A", "E"].forEach((name, row) => {
-      const line = document.createElement("tr");
-      const label = document.createElement("th");
-      label.scope = "row";
-      label.textContent = name;
-      line.append(label);
-      notes.forEach((note, index) => {
-        const cell = document.createElement("td");
-        const button = document.createElement("button");
-        button.type = "button";
-        button.dataset.step = index;
-        button.dataset.string = row + 1;
-        button.textContent = note.string === row + 1 ? note.fret : "—";
-        button.className = "tab-cell";
-        button.disabled = unavailable || player.playing;
-        button.setAttribute(
-          "aria-label",
-          t("{step}. adım, {string}. tel, perde {fret}", {
-            step: index + 1,
-            string: row + 1,
-            fret: note.string === row + 1 ? note.fret : "—",
-          }),
-        );
-        cell.append(button);
-        cell.classList.toggle("step-selected", selected === index);
-        cell.classList.toggle("step-playing", active === index);
-        line.append(cell);
-      });
-      const extra = document.createElement("td");
-      const add = document.createElement("button");
-      add.type = "button";
-      add.className = "tab-cell add-cell";
-      add.dataset.step = notes.length;
-      add.dataset.string = row + 1;
-      add.textContent = "+";
-      add.disabled =
-        unavailable || player.playing || notes.length >= maximumNotes;
-      add.setAttribute(
-        "aria-label",
-        t("{string}. tele yeni nota ekle", { string: row + 1 }),
-      );
-      extra.append(add);
-      line.append(extra);
-      table.append(line);
-    });
-    const tempo = Number(bpm.value);
-    let seconds = "—";
-    if (bpm.checkValidity()) {
-      const timeline = createTimeline(notes, tempo);
-      seconds = timeline.length
-        ? (timeline.at(-1).start + timeline.at(-1).duration).toFixed(1)
-        : "0";
-    }
-    setText("#editorSummary", "{count} adım · {seconds} sn", {
-      count: notes.length,
-      seconds,
-    });
-    fretInput.disabled =
-      unavailable || player.playing || stringInput.value === "rest";
     section.querySelectorAll("[data-editor-control]").forEach((control) => {
-      control.disabled = unavailable || player.playing;
+      control.disabled = blocked();
     });
-    document.querySelector("#editorPlay").disabled =
-      unavailable || player.playing || !notes.length;
-    document.querySelector("#editorStop").disabled = !player.playing;
-    document.querySelector("#editorDelete").disabled =
-      unavailable || player.playing || selected < 0;
-    fretInput.disabled =
-      unavailable || player.playing || stringInput.value === "rest";
-    document.querySelector("#editorUndo").disabled =
-      unavailable || player.playing || !history.past.length;
-    document.querySelector("#editorRedo").disabled =
-      unavailable || player.playing || !history.future.length;
-    document.querySelector("#editorDuplicate").disabled =
-      unavailable ||
-      player.playing ||
-      selected < 0 ||
-      notes.length >= maximumNotes;
+    fields.fret.disabled = blocked() || fields.string.value === "rest";
+    fields.bend.disabled =
+      blocked() || fields.pitch.value !== "bend" || fields.dead.checked;
+    fields.target.disabled =
+      blocked() ||
+      !["slide", "hammerOn", "pullOff"].includes(fields.pitch.value) ||
+      fields.dead.checked;
+    fields.depth.disabled =
+      blocked() || !fields.vibrato.checked || fields.dead.checked;
+    fields.rate.disabled = fields.depth.disabled;
+    for (const control of [fields.pitch, fields.vibrato, fields.mute])
+      control.disabled = blocked() || fields.dead.checked;
+    find("editorPlay").disabled = blocked() || !session.document.events.length;
+    find("editorStop").disabled = !player.playing;
+    find("editorUndo").disabled = blocked() || !session.past.length;
+    find("editorRedo").disabled = blocked() || !session.future.length;
+    find("editorDelete").disabled = blocked() || !selectedEvent();
+    find("editorRemoveVoice").disabled = blocked() || !selectedVoice();
+    find("editorDuplicate").disabled =
+      blocked() || !selectedEvent() || session.document.events.length >= 128;
+    fields.bpm.value = session.document.bpm;
+    const meter = session.document.meter;
+    ensureOption(
+      fields.meter,
+      `${meter.beats}/${meter.unit}`,
+      `${meter.beats}/${meter.unit}`,
+    );
+    const timeline = compileScore(session.document);
+    setText("#editorSummary", "{count} adım · {seconds} sn", {
+      count: session.document.events.length,
+      seconds: timeline.duration.toFixed(1),
+    });
     setText(
       "#editorSelection",
-      selected >= 0
+      selectedEvent()
         ? "Seçili adım: {step} · Değişiklikler otomatik uygulanır."
         : "Yeni nota · Tablodaki + işaretine basarak ekle.",
-      { step: selected + 1 },
-    );
-    if (focusStep !== undefined) {
-      const selector = focusString
-        ? `[data-step="${focusStep}"][data-string="${focusString}"]`
-        : `[data-step="${focusStep}"]`;
-      table.querySelector(selector)?.focus({ preventScroll: true });
-    }
-  }
-
-  function readNote() {
-    const rest = stringInput.value === "rest";
-    if (!rest && !fretInput.checkValidity())
-      throw new Error("Perde 0–24 arasında bir tam sayı olmalı.");
-    return validateNotes([
       {
-        string: rest ? null : Number(stringInput.value),
-        fret: rest ? null : Number(fretInput.value),
-        beats: Number(durationInput.value),
+        step:
+          session.document.events.findIndex((event) => event.id === selected) +
+          1,
       },
-    ])[0];
+    );
+    if (restore?.id)
+      grid
+        .querySelector(
+          `[data-event="${restore.id}"][data-string="${restore.string ?? fields.string.value}"]`,
+        )
+        ?.focus({ preventScroll: true });
   }
 
-  function changeNotes(action) {
-    if (unavailable || player.playing) return;
-    const previous = structuredClone(notes);
+  function edit(action, focus = false) {
+    if (blocked()) return;
     try {
       action();
-      history.record(previous, notes);
+      // Önceden alınmış belgelerde de ölçü sayısı arayüz sınırında kalmalı.
       message();
       save();
-      render();
+      render(
+        focus ? { id: selected ?? "new", string: fields.string.value } : null,
+      );
     } catch (error) {
-      notes = previous;
-      message(error.message);
+      message(
+        error.message.startsWith("score")
+          ? "Teknik değerlerini kontrol et. Hedef perde ve teknik yönü uyumlu olmalı."
+          : error.message,
+      );
+      syncFields();
+      render();
     }
   }
 
-  const player = new TabPlayer({
-    onStep(index) {
-      active = index;
-      // Tablosunu yeniden kurmadan imleci taşı: klavye odağı korunur.
-      table.querySelectorAll("tr").forEach((row) => {
-        [...row.children].forEach((cell, column) =>
-          cell.classList.toggle("step-playing", column === index + 1),
+  const player = new ScorePlayer({
+    onStep(id) {
+      active = id;
+      grid
+        .querySelectorAll("[data-event]")
+        .forEach((cell) =>
+          cell.classList.toggle("step-playing", cell.dataset.event === id),
         );
-      });
-      const cell = table.rows[0]?.cells[index + 1];
-      if (cell) {
-        const wrapper = document.querySelector("#editorScroll");
-        if (
-          cell.offsetLeft > wrapper.scrollLeft + wrapper.clientWidth - 80 ||
-          cell.offsetLeft < wrapper.scrollLeft
-        )
-          wrapper.scrollLeft = Math.max(
-            0,
-            cell.offsetLeft - wrapper.clientWidth / 2,
-          );
-      }
+      grid
+        .querySelector(`[data-event="${id}"]`)
+        ?.scrollIntoView({ block: "nearest", inline: "nearest" });
     },
     onStop() {
-      active = -1;
+      active = null;
       onStop();
       render();
       setText("#editorPlaybackStatus", "Oynatma durdu");
     },
   });
 
-  document.querySelector("#editorAdd").addEventListener("click", () =>
-    changeNotes(() => {
-      if (notes.length >= maximumNotes)
-        throw new Error("En fazla 128 adım ekleyebilirsin.");
-      const note = readNote();
-      notes.push(note);
-      selected = notes.length - 1;
-    }),
-  );
-  document.querySelector("#editorDelete").addEventListener("click", () =>
-    changeNotes(() => {
-      if (selected >= 0) {
-        notes.splice(selected, 1);
-        selected = -1;
-      }
-    }),
-  );
-  function applyFields() {
-    if (selected >= 0)
-      changeNotes(() => {
-        notes[selected] = readNote();
-      });
-    else render();
-  }
-  stringInput.addEventListener("change", applyFields);
-  fretInput.addEventListener("change", applyFields);
-  durationInput.addEventListener("change", applyFields);
-
-  function focusGrid() {
-    const step = selected < 0 ? notes.length : selected;
-    const string = stringInput.value === "rest" ? "6" : stringInput.value;
-    table
-      .querySelector(`[data-step="${step}"][data-string="${string}"]`)
-      ?.focus({ preventScroll: true });
+  function add(rest = false) {
+    edit(() => {
+      const voice = rest ? null : readVoice();
+      selected = session.add(voice, Number(fields.duration.value));
+      if (rest) fields.string.value = "rest";
+      syncFields();
+    }, true);
   }
 
-  function enterFret(fret) {
-    fretInput.value = fret;
-    if (stringInput.value === "rest") stringInput.value = "6";
-    changeNotes(() => {
-      const note = readNote();
-      if (selected < 0) {
-        if (notes.length >= maximumNotes)
-          throw new Error("En fazla 128 adım ekleyebilirsin.");
-        notes.push(note);
-        selected = notes.length - 1;
-      } else notes[selected] = note;
-    });
-    focusGrid();
-  }
-
-  table.addEventListener("click", (event) => {
-    const button = event.target.closest(".tab-cell");
-    if (!button || unavailable || player.playing) return;
-    const index = Number(button.dataset.step);
-    stringInput.value = button.dataset.string;
+  grid.addEventListener("click", (event) => {
+    const cell = event.target.closest("[data-event]");
+    if (!cell || blocked()) return;
     digitBuffer = "";
-    if (index === notes.length) {
-      selected = -1;
-      enterFret(Number(fretInput.value) || 0);
+    const string = cell.dataset.string;
+    if (string) fields.string.value = string;
+    if (cell.dataset.event === "new") {
+      add();
+      return;
+    }
+    selected = cell.dataset.event;
+    if (!string)
+      fields.string.value = selectedEvent().notes[0]?.string ?? "rest";
+    const existing = selectedVoice();
+    if (string && !existing) {
+      // Boş tel hücresine tıklamak aynı akora yeni ses ekler; diğer teller korunur.
+      fields.pitch.value = "none";
+      fields.vibrato.checked = false;
+      fields.mute.checked = false;
+      fields.dead.checked = false;
+      edit(() => session.setVoice(selected, readVoice()), true);
     } else {
-      selected = index;
-      fretInput.value = notes[index].fret ?? 0;
-      durationInput.value = notes[index].beats;
-      changeNotes(() => {
-        notes[selected] = readNote();
-      });
-      focusGrid();
+      syncFields();
+      render({ id: selected, string: fields.string.value });
     }
   });
 
-  document.querySelector("#editorFrets").addEventListener("click", (event) => {
+  function enterFret(fret) {
+    fields.fret.value = fret;
+    if (fields.string.value === "rest") fields.string.value = "6";
+    if (!selectedEvent()) add();
+    else edit(() => session.setVoice(selected, readVoice()), true);
+  }
+  find("editorFrets").addEventListener("click", (event) => {
     const button = event.target.closest("[data-fret]");
     if (button) {
       digitBuffer = "";
       enterFret(Number(button.dataset.fret));
     }
   });
-
-  document.querySelector("#editorNew").addEventListener("click", () => {
-    selected = -1;
+  find("editorAdd").addEventListener("click", () => add());
+  find("editorRest").addEventListener("click", () => add(true));
+  find("editorNew").addEventListener("click", () => {
+    selected = null;
     digitBuffer = "";
-    render();
-    focusGrid();
+    syncFields();
+    render({
+      id: "new",
+      string: fields.string.value === "rest" ? "6" : fields.string.value,
+    });
   });
-  document.querySelector("#editorRest").addEventListener("click", () => {
-    stringInput.value = "rest";
-    document.querySelector("#editorAdd").click();
-    digitBuffer = "";
-    focusGrid();
-  });
-  document.querySelector("#editorDuplicate").addEventListener("click", () =>
-    changeNotes(() => {
-      if (selected < 0 || notes.length >= maximumNotes) return;
-      notes.splice(selected + 1, 0, { ...notes[selected] });
-      selected++;
+  find("editorDelete").addEventListener("click", () =>
+    edit(() => {
+      session.removeEvent(selected);
+      selected = null;
+      syncFields();
     }),
   );
-
+  find("editorRemoveVoice").addEventListener("click", () =>
+    edit(() => {
+      session.removeVoice(selected, Number(fields.string.value));
+      syncFields();
+    }),
+  );
+  find("editorDuplicate").addEventListener("click", () =>
+    edit(() => {
+      selected = session.duplicate(selected);
+      syncFields();
+    }),
+  );
   function restore(direction) {
-    if (unavailable || player.playing) return;
-    notes = history[direction](notes);
-    selected = -1;
-    digitBuffer = "";
-    message();
-    save();
-    render();
+    edit(() => {
+      session[direction]();
+      selected = null;
+      syncFields();
+    });
   }
-  document
-    .querySelector("#editorUndo")
-    .addEventListener("click", () => restore("undo"));
-  document
-    .querySelector("#editorRedo")
-    .addEventListener("click", () => restore("redo"));
+  find("editorUndo").addEventListener("click", () => restore("undo"));
+  find("editorRedo").addEventListener("click", () => restore("redo"));
+
+  fields.string.addEventListener("change", () => {
+    syncFields();
+    render();
+  });
+  fields.duration.addEventListener("change", () => {
+    if (selectedEvent())
+      edit(() =>
+        session.change((score) => {
+          score.events.find((event) => event.id === selected).durationTicks =
+            Number(fields.duration.value);
+        }),
+      );
+  });
+  for (const input of [
+    fields.fret,
+    fields.pitch,
+    fields.bend,
+    fields.target,
+    fields.vibrato,
+    fields.depth,
+    fields.rate,
+    fields.mute,
+    fields.dead,
+  ]) {
+    input.addEventListener("change", () => {
+      if (selectedEvent() && fields.string.value !== "rest")
+        edit(() => session.setVoice(selected, readVoice()));
+      else render();
+    });
+  }
+  fields.bpm.addEventListener("change", () =>
+    edit(() => {
+      if (!fields.bpm.checkValidity())
+        throw new Error("Hedef tempo 30–240 BPM arasında olmalı.");
+      session.change((score) => {
+        score.bpm = Number(fields.bpm.value);
+      });
+    }),
+  );
+  fields.meter.addEventListener("change", () =>
+    edit(() =>
+      session.change((score) => {
+        const [beats, unit] = fields.meter.value.split("/").map(Number);
+        score.meter = { beats, unit };
+      }),
+    ),
+  );
+
   section.addEventListener("keydown", (event) => {
-    const typing = event.target.matches("input, select, textarea");
-    if (typing || unavailable || player.playing || event.altKey) return;
+    if (
+      event.target.matches("input, select, textarea") ||
+      blocked() ||
+      event.altKey
+    )
+      return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
       event.preventDefault();
       restore(event.shiftKey ? "redo" : "undo");
       return;
     }
-    if (event.ctrlKey || event.metaKey || !table.contains(event.target)) return;
+    if (event.ctrlKey || event.metaKey || !grid.contains(event.target)) return;
     if (/^[0-9]$/.test(event.key)) {
       event.preventDefault();
       const now = performance.now();
@@ -396,62 +426,47 @@ export function initializeTabEditor({ onStart, onStop }) {
       enterFret(Number(digitBuffer));
       return;
     }
-    if (event.key === "Delete" || event.key === "Backspace") {
+    digitBuffer = "";
+    if (["Delete", "Backspace"].includes(event.key)) {
       event.preventDefault();
-      changeNotes(() => {
-        if (selected >= 0) {
-          notes.splice(selected, 1);
-          selected = -1;
-        }
+      find(event.shiftKey ? "editorDelete" : "editorRemoveVoice").click();
+      return;
+    }
+    if (["ArrowLeft", "ArrowRight"].includes(event.key)) {
+      event.preventDefault();
+      const events = session.document.events;
+      const index = selected
+        ? events.findIndex((item) => item.id === selected)
+        : events.length;
+      const next = index + (event.key === "ArrowRight" ? 1 : -1);
+      selected = events[Math.max(0, next)]?.id ?? null;
+      syncFields();
+      render({
+        id: selected ?? "new",
+        string: fields.string.value === "rest" ? "6" : fields.string.value,
       });
-      focusGrid();
-      return;
     }
-    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+    if (["ArrowUp", "ArrowDown"].includes(event.key)) {
       event.preventDefault();
-      digitBuffer = "";
-      const next =
-        (selected < 0 ? notes.length : selected) +
-        (event.key === "ArrowRight" ? 1 : -1);
-      selected = next >= notes.length ? -1 : Math.max(0, next);
-      if (!notes.length) selected = -1;
-      if (selected >= 0) {
-        stringInput.value = notes[selected].string ?? "6";
-        fretInput.value = notes[selected].fret ?? 0;
-        durationInput.value = notes[selected].beats;
-      }
-      render();
-      focusGrid();
-      return;
-    }
-    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-      event.preventDefault();
-      digitBuffer = "";
-      stringInput.value =
-        Math.max(
-          1,
-          Math.min(
-            6,
-            Number(stringInput.value) + (event.key === "ArrowDown" ? 1 : -1),
-          ),
-        ) || 6;
-      focusGrid();
+      fields.string.value = Math.max(
+        1,
+        Math.min(
+          6,
+          (Number(fields.string.value) || 6) +
+            (event.key === "ArrowUp" ? -1 : 1),
+        ),
+      );
+      syncFields();
+      render({ id: selected ?? "new", string: fields.string.value });
     }
   });
-  bpm.addEventListener("input", () => {
-    save();
-    render();
-  });
-  document.querySelector("#editorPlay").addEventListener("click", async () => {
-    if (unavailable || player.playing || !notes.length) return;
-    if (!bpm.checkValidity()) {
-      message("Hedef tempo 30–240 BPM arasında olmalı.");
-      return;
-    }
+
+  find("editorPlay").addEventListener("click", async () => {
+    if (blocked() || !session.document.events.length) return;
     message();
     onStart();
     setText("#editorPlaybackStatus", "Tab çalınıyor");
-    const starting = player.play(notes, Number(bpm.value));
+    const starting = player.play(session.document);
     render();
     try {
       await starting;
@@ -461,28 +476,68 @@ export function initializeTabEditor({ onStart, onStop }) {
       );
     }
   });
-  document
-    .querySelector("#editorStop")
-    .addEventListener("click", () => player.stop());
-  document.querySelector("#editorDownload").addEventListener("click", () => {
-    if (!bpm.checkValidity()) {
-      message("Hedef tempo 30–240 BPM arasında olmalı.");
-      return;
-    }
-    const url = URL.createObjectURL(
-      new Blob([`BPM: ${bpm.value}\n${exportTextTab(notes)}`], {
-        type: "text/plain;charset=utf-8",
-      }),
-    );
+  find("editorStop").addEventListener("click", () => player.stop());
+  function download(content, filename, type) {
+    const url = URL.createObjectURL(new Blob([content], { type }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = "ritim-izi-tab.txt";
+    link.download = filename;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  find("editorDownload").addEventListener("click", () =>
+    download(
+      exportScoreText(session.document),
+      "ritim-izi-tab.txt",
+      "text/plain;charset=utf-8",
+    ),
+  );
+  find("editorJson").addEventListener("click", () =>
+    download(
+      serializeScore(session.document),
+      "ritim-izi-score.json",
+      "application/json",
+    ),
+  );
+  find("editorImport").addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file || blocked()) return;
+    if (file.size > 1024 * 1024) {
+      message("JSON dosyası en fazla 1 MB olabilir.");
+      return;
+    }
+    loading = true;
+    render();
+    try {
+      const score = parseScore(await file.text());
+      splitMeasures(score);
+      // Dosya açma da geri alınabilir; eski belge kaybolmaz.
+      session.change((draft) => {
+        Object.assign(draft, score);
+      });
+      selected = null;
+      storageProtected = false;
+      syncFields();
+      save();
+      message();
+    } catch {
+      message("Dosya okunamadı. Desteklenen bir Ritim İzi JSON dosyası seç.");
+    } finally {
+      loading = false;
+      event.target.value = "";
+      render();
+    }
   });
-  document.addEventListener("preferenceschange", render);
+  document.addEventListener("preferenceschange", () => render());
+  syncFields();
   render();
-  setText("#editorSaveStatus", "Düzenlemeler bu tarayıcıda saklanır.");
+  message(initialMessage);
+  setText(
+    "#editorSaveStatus",
+    storageProtected
+      ? "Taslak kaydedilemedi. Kaybetmemek için indir."
+      : "Düzenlemeler bu tarayıcıda saklanır.",
+  );
   return {
     stop: () => player.stop(),
     setUnavailable(value) {

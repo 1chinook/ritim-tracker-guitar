@@ -25,13 +25,22 @@ Tarayıcıda http://127.0.0.1:4173 adresini aç. Mikrofon için localhost veya H
 
 ### Tab editörü ve oynatma
 
-Hızlı giriş: tablodaki bir telin `+` hücresine bas, sonra perdeyi hızlı seçim düğmelerinden seç veya klavyeyle yaz. Mevcut bir notayı başka teldeki hücreye tıklayarak taşıyabilirsin. Alan değişiklikleri seçili notaya otomatik uygulanır. “Yeni nota” düğmesi ekleme moduna döner. “Geri al / Yinele” son 50 nota düzenlemesini kapsar; “Seçili notayı çoğalt” aynı notayı hemen arkasına ekler.
+Editör artık sürümlü nota belgesini kullanır. Aynı sütundaki farklı tellerdeki boş hücrelere tıklayarak akor oluştur; mevcut notaya tıklayıp perde ve tekniklerini düzenle. Yeni sütun için `+` veya “Yeni nota” kullan. “Sus ekle” ayrı bir sessiz adım ekler.
 
-Tab üzerindeyken sayılar perdeyi girer (10–24 için iki rakamı kısa aralıkla yaz), sol/sağ adımlar arasında, yukarı/aşağı teller arasında gezinir. Delete/Backspace seçili adımı siler. Ctrl/⌘ Z geri alır, Ctrl/⌘ Shift Z yineler. Metin ve sayı alanlarında tarayıcının normal klavye davranışı korunur.
+- Her sütun bir adım, içindeki teller eşzamanlı çalan seslerdir. Süre değişikliği bütün akoru etkiler.
+- Vibrato derinliği/hızı, bend miktarı, slide, hammer-on ve pull-off hedef perdesi seçilebilir. Palm mute ve ölü nota da desteklenir.
+- Tab işaretleri: `~` vibrato, `↑` bend, `/` veya `\\` slide, `h` hammer-on, `p` pull-off, `PM` palm mute, `×` ölü nota.
+- Bend için yarım ses sayısını gir: 1 = yarım ton, 2 = tam ton. Hammer-on hedefi başlangıçtan yüksek; pull-off hedefi düşük olmalı.
+- Slide/hammer-on/pull-off, hedef perdeye aynı adımın süresi içinde geçer; ikinci bir adım oluşturmaz.
+- 4/4, 3/4, 6/8 ve diğer ölçüler desteklenir. Ölçüyü aşan nota `↝` ile devam eder; oynatmada tekrar tetiklenmez.
+- Noktalı süreler ve üçlemeler seçilebilir. Bir dörtlük 960 tick'tir; tekniklerde süreler ortak ses saatine planlanır.
+- En fazla 128 adım ve 512 ölçü desteklenir. Tek gitar, altı tel ve 0–24 perde kullanılır.
 
-Tel (1 en ince, 6 en kalın), 0–24 perde ve nota süresi seçerek en fazla 128 adımlık tek sesli egzersiz yazabilirsin. “Sus” seçeneği sessiz bir adım ekler. Seçili notanın alanları değiştirildiğinde düzenleme otomatik uygulanır; silme düğmesi seçili adımı kaldırır. Bir vuruş dörtlük notadır; sekizlik yarım, onaltılık çeyrek vuruştur.
+Tab odaktayken rakamlar perde girer; 10–24 için iki rakamı hızlı yaz. Sol/sağ adımlar, yukarı/aşağı teller arasında gezinir. Delete/Backspace seçili telin notasını, Shift+Delete tüm adımı siler. Son ses silindiğinde adım sus olarak kalır. Ctrl/⌘ Z geri alır, Ctrl/⌘ Shift Z yineler. BPM, ölçü, teknik ve akor değişiklikleri de geri alınabilir.
 
-Editörün kendi BPM alanı ve oynat/durdur düğmeleri vardır. Oynatma sırasında çalınan sütun vurgulanır. Ses, standart akortta sentetik bir önizlemedir. Mikrofon, akort cihazı ve metronom ile eşzamanlı çalıştırılmaz. Düzenlemeler bu tarayıcıya otomatik kaydedilir; metin tabı olarak da indirilebilir. İndirilen metindeki `Beats` satırı her sütunun vuruş süresini korur. Metin dosyasını yeniden içe aktarma henüz yoktur. Editörün nota zaman çizelgesi henüz performans karşılaştırmasına bağlanmaz.
+“Tabı çal”, akorları aynı anda ve teknikleri sentetik olarak önizler. Ses gerçek gitar örneklerinden üretilmez. Özellikle hammer-on/pull-off basitleştirilmiş koparmasız perde değişimleridir; profesyonel bir fiziksel gitar modeli değildir.
+
+Taslak yeni `ritim-score-v1` anahtarına kaydedilir; eski `ritim-tab-draft-v1` taslağı yedek olarak korunur. Akor ve teknikleri tam saklamak için JSON indir/aç özelliğini kullan. Dosya açma geri alınabilir. Bozuk veya gelecekteki kayıt üzerine sessizce yazılmaz. Metin tabı insan tarafından okunabilir bir çıktıdır; yeniden içe aktarılmaz. Bu editör henüz kayıtla nota nota performans karşılaştırması yapmaz.
 
 ### Canlı akort cihazı
 
@@ -59,7 +68,7 @@ Sonuçlar yalnızca yüklenen veya kaydedilen sesten hesaplanır. Sessiz, çok k
 
 ## Kod düzeni
 
-Gelişmiş tab editörü için ilk veri altyapısı eklendi: sürümlü belge, akor/sus modeli, teknik bilgileri ve ortak zaman çizelgesi. Bu model henüz arayüze veya ses motoruna bağlanmadı. Taslaklar otomatik dönüştürülüp üzerine yazılmaz. Ayrıntılar: [veri modeli ve aşamalı plan](docs/score-format.md).
+Gelişmiş editör, sürümlü belgeyi düzenleme, kayıt, çizim ve oynatmada ortak kullanır. Ayrıntılar: [veri modeli ve sınırlar](docs/score-format.md).
 
 - `dist/app.js`: Ekran olayları, dosya seçimi ve sonuç görünümü.
 - `dist/audio.js`: Mikrofon, kayıt yaşam döngüsü ve metronom.
@@ -74,7 +83,7 @@ npm run format:check
 npm run format
 ```
 
-Sıradaki geliştirmeler: Guitar Pro/MusicXML okuma, ritimli nota zaman çizelgesi, perde algılama ve performansı nota nota eşleştirme.
+Sıradaki geliştirmeler: Guitar Pro/MusicXML, çoklu enstrüman, daha doğal gitar sesi ve kayıtları nota nota eşleştirme.
 
 ---
 
@@ -103,13 +112,22 @@ Use the header controls to switch between Turkish and English, or between light 
 
 #### Tab editor and playback
 
-Quick entry: click a string's `+` cell, then select a fret from the quick buttons or type it on your keyboard. Click another string in an existing column to move that note. Field changes apply automatically to the selected note. “New note” returns to insert mode. Undo/redo covers the last 50 note edits; duplicating a note inserts a copy immediately after it.
+The editor now uses the versioned score document. Click empty cells on different strings in the same column to build chords. Select an existing note to edit its fret and techniques. Use `+` or “New note” for a new step, or add a separate rest.
 
-When the tab has focus, digits enter frets (type two digits quickly for 10–24), left/right arrows navigate steps, and up/down arrows navigate strings. Delete/Backspace removes the selected step. Ctrl/⌘ Z undoes and Ctrl/⌘ Shift Z redoes. Text and number fields retain their normal browser keyboard behavior.
+- Each column is one event with simultaneous notes. Changing its duration affects the whole chord.
+- Edit vibrato depth/rate, bend amount, slide, hammer-on and pull-off target frets, palm mute, and dead notes.
+- Notation: `~` vibrato, `↑` bend, `/` or `\\` slide, `h` hammer-on, `p` pull-off, `PM` palm mute, `×` dead note.
+- Bend amounts are semitones: 1 = a half step, 2 = a whole step. Hammer-on targets must be higher; pull-off targets lower.
+- Slide/hammer-on/pull-off transitions reach the target within the current event's duration; they do not create a second event.
+- Time signatures include 4/4, 3/4 and 6/8. Notes crossing bars continue with `↝` and are not re-triggered in audio.
+- Dotted durations and triplets are supported with a shared audio clock and 960 ticks per quarter note.
+- Limits: 128 events, 512 measures, one six-string guitar, frets 0–24.
 
-Build a single-note exercise with up to 128 steps. Choose a string (1 is highest, 6 is lowest), fret 0–24, and duration, or select a rest. Select a step heading to update or delete it. One beat is a quarter note; eighth notes last half a beat and sixteenth notes last a quarter beat.
+With the tab focused, type fret digits (two digits quickly for 10–24). Left/right arrows navigate steps; up/down navigate strings. Delete/Backspace removes one string's note, Shift+Delete the entire step. Removing the last voice leaves a rest. Ctrl/⌘ Z undoes and Ctrl/⌘ Shift Z redoes. Tempo, meter, techniques and chords are included in undo/redo.
 
-The editor has its own BPM and play/stop controls, with a highlighted playback cursor. Audio is a synthesized preview in standard tuning. Playback runs separately from recording, the tuner, and the metronome. Edits are saved automatically in this browser. Download a text tab to keep a copy; its `Beats` line preserves each column's duration. Text import is not implemented yet. The editor's timed note sequence is not yet connected to performance comparison.
+Playback previews simultaneous chords and techniques using synthesis, not recorded guitar samples. Hammer-ons and pull-offs are simplified legato pitch changes, not a professional physical guitar model.
+
+The new draft is saved under `ritim-score-v1`; the old `ritim-tab-draft-v1` draft remains as a backup. Download/open JSON to preserve full chords and techniques; opening a file is undoable. Corrupt or future-version drafts are not silently overwritten. Text tabs are readable exports and cannot be re-imported. Recorded performance is not yet aligned against this score.
 
 #### Live guitar tuner
 
@@ -139,7 +157,7 @@ Results are calculated only from uploaded or recorded audio. Silent, short, or u
 
 ### Project structure
 
-The advanced editor foundation now includes a versioned score document, chord/rest data, technique metadata, and a shared timeline compiler. It is not yet connected to the editor UI or audio engine and does not overwrite existing drafts. See the [format and incremental plan](docs/score-format.md).
+The editor uses the shared score document for editing, storage, notation, and playback. See the [format and limitations](docs/score-format.md).
 
 - `dist/app.js`: interface events, file selection, and result rendering.
 - `dist/audio.js`: microphone recording, resource cleanup, and metronome.
@@ -156,4 +174,4 @@ npm run format:check
 npm run format
 ```
 
-Planned improvements include Guitar Pro/MusicXML import, a timed note sequence, pitch detection, and note-by-note performance alignment.
+Planned improvements include Guitar Pro/MusicXML, multiple instruments, more natural guitar sound, and note-by-note performance alignment.

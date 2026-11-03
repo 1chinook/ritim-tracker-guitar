@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="tab-editor.css" />
     <link rel="stylesheet" href="header.css" />
     <link rel="stylesheet" href="editor-ease.css" />
+    <link rel="stylesheet" href="score-editor.css" />
   </head>
   <body data-page="editor">
     <header class="topbar">
@@ -53,9 +54,8 @@
         </div>
         <div class="editor-card">
           <p class="help">
-            Tablodaki + işaretine bas, ardından perde numarasını yaz veya
-            aşağıdan seç. Notaya tıklayarak düzenle; değişiklikler otomatik
-            uygulanır.
+            Aynı sütundaki farklı tellere tıklayarak akor oluştur. Notayı seçip
+            tekniklerini düzenle; yeni adım için + işaretini kullan.
           </p>
           <div class="editor-actions editor-history">
             <button class="ghost" id="editorNew" data-editor-control>
@@ -99,11 +99,16 @@
             <label
               ><span>Nota süresi</span
               ><select id="editorDuration" data-editor-control>
-                <option value="0.25">Onaltılık · ¼ vuruş</option>
-                <option value="0.5">Sekizlik · ½ vuruş</option>
-                <option value="1" selected>Dörtlük · 1 vuruş</option>
-                <option value="2">İkilik · 2 vuruş</option>
-                <option value="4">Birlik · 4 vuruş</option>
+                <option value="120">Otuzikilik · 1/32</option>
+                <option value="240">Onaltılık · 1/16</option>
+                <option value="320">Sekizlik üçleme</option>
+                <option value="480">Sekizlik · 1/8</option>
+                <option value="640">Dörtlük üçleme</option>
+                <option value="720">Noktalı sekizlik</option>
+                <option value="960" selected>Dörtlük · 1/4</option>
+                <option value="1440">Noktalı dörtlük</option>
+                <option value="1920">İkilik · 1/2</option>
+                <option value="3840">Birlik · 1/1</option>
               </select></label
             >
             <label
@@ -119,9 +124,116 @@
                 data-editor-control
             /></label>
           </div>
+          <fieldset class="technique-panel">
+            <legend>Ölçü ve seçili notanın teknikleri</legend>
+            <div class="editor-fields">
+              <label
+                ><span>Ölçü</span
+                ><select id="editorMeter" data-editor-control>
+                  <option value="4/4">4/4</option>
+                  <option value="3/4">3/4</option>
+                  <option value="6/8">6/8</option>
+                  <option value="2/4">2/4</option>
+                  <option value="5/4">5/4</option>
+                </select></label
+              >
+              <label
+                ><span>Perde geçişi</span
+                ><select id="editorPitchTechnique" data-editor-control>
+                  <option value="none">Normal</option>
+                  <option value="bend">Bend</option>
+                  <option value="slide">Slide</option>
+                  <option value="hammerOn">Hammer-on</option>
+                  <option value="pullOff">Pull-off</option>
+                </select></label
+              >
+              <label
+                ><span>Bend (yarım ses)</span
+                ><input
+                  id="editorBend"
+                  type="number"
+                  min="0.5"
+                  max="4"
+                  step="0.5"
+                  value="1"
+                  data-editor-control
+              /></label>
+              <label
+                ><span>Hedef perde</span
+                ><input
+                  id="editorTargetFret"
+                  type="number"
+                  min="0"
+                  max="24"
+                  step="1"
+                  value="2"
+                  data-editor-control
+              /></label>
+            </div>
+            <div class="technique-toggles">
+              <label
+                ><input
+                  id="editorVibrato"
+                  type="checkbox"
+                  data-editor-control
+                />
+                Vibrato ~</label
+              >
+              <label
+                ><input
+                  id="editorPalmMute"
+                  type="checkbox"
+                  data-editor-control
+                />
+                Palm mute</label
+              >
+              <label
+                ><input
+                  id="editorDeadNote"
+                  type="checkbox"
+                  data-editor-control
+                />
+                Ölü nota ×</label
+              >
+            </div>
+            <details>
+              <summary>Vibrato ayarları</summary>
+              <div class="editor-fields">
+                <label
+                  ><span>Vibrato derinliği (cent)</span
+                  ><input
+                    id="editorVibratoDepth"
+                    type="number"
+                    min="5"
+                    max="200"
+                    value="30"
+                    data-editor-control
+                /></label>
+                <label
+                  ><span>Vibrato hızı (Hz)</span
+                  ><input
+                    id="editorVibratoRate"
+                    type="number"
+                    min="1"
+                    max="12"
+                    step="0.5"
+                    value="5"
+                    data-editor-control
+                /></label>
+              </div>
+            </details>
+            <p class="help">
+              Slide, hammer-on ve pull-off hedefi aynı notanın süresi içinde
+              duyulur. Hammer-on hedefi daha yüksek, pull-off hedefi daha düşük
+              perde olmalı.
+            </p>
+          </fieldset>
           <div class="editor-actions">
             <button class="ghost" id="editorAdd" data-editor-control>
               Nota / sus ekle
+            </button>
+            <button class="ghost" id="editorRemoveVoice">
+              Seçili telin notasını sil
             </button>
             <button class="ghost" id="editorDelete">Seçili adımı sil</button>
           </div>
@@ -149,14 +261,16 @@
             <small>13–24 için perde alanını veya klavyeyi kullan.</small>
           </div>
           <p class="editor-shortcuts">
-            Klavye: sayılar = perde · ← → = adım · ↑ ↓ = tel · Delete = sil ·
-            Ctrl/⌘ Z = geri al
+            Klavye: sayılar = perde · ← → = adım · ↑ ↓ = tel · Delete = nota sil
+            · Shift+Delete = adım sil · Ctrl/⌘ Z = geri al
           </p>
           <div id="editorScroll" class="editor-scroll">
-            <table
+            <div
               id="editorTable"
+              class="score-measures"
+              role="group"
               aria-label="Düzenlenebilir gitar tabı"
-            ></table>
+            ></div>
           </div>
           <div class="editor-actions">
             <button class="primary" id="editorPlay">Tabı çal</button>
@@ -165,14 +279,28 @@
               Metin tabını indir
             </button>
           </div>
+          <div class="editor-actions">
+            <button class="ghost" id="editorJson" data-editor-control>
+              Projeyi JSON indir
+            </button>
+            <label class="score-import"
+              ><span>JSON proje aç</span
+              ><input
+                id="editorImport"
+                type="file"
+                accept=".json,application/json"
+                data-editor-control
+            /></label>
+          </div>
           <p id="editorPlaybackStatus" role="status">Oynatma durdu</p>
           <p id="editorSummary" class="help"></p>
           <p id="editorSaveStatus" class="help"></p>
           <p id="editorMessage" class="message hidden" role="alert"></p>
           <p class="help">
-            1 vuruş = dörtlük nota. Her sütun bir nota veya sustur; tüm tellerde
-            çizgi olan sütun sus anlamına gelir. Bu editörün tabı henüz
-            performans analizine bağlanmaz.
+            Teknikler sentetik olarak önizlenir. Delete seçili telin notasını,
+            Shift+Delete tüm adımı siler. Ölçü sınırını aşan nota ↝ işaretiyle
+            devam eder. JSON dosyası akorları ve teknikleri korur; bu tab henüz
+            performans analiziyle eşleştirilmez.
           </p>
         </div>
       </section>

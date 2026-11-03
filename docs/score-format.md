@@ -1,10 +1,10 @@
-# Gelişmiş editör: ilk altyapı adımı
+# Gelişmiş editör: ortak belge ve oynatma
 
-Bu adım yalnızca veri sözleşmesini kurar. Mevcut tek sesli editör ve ses motoru çalışmaya devam eder; yeni teknik düğmeleri veya gelişmiş gitar sesi henüz eklenmez. Yeni model henüz aktif tarayıcı taslağının yerine geçirilmez.
+Editör, kayıt ve oynatma artık aynı sürümlü belgeyi kullanır. Tek sesli eski taslaklar açılışta bellekte dönüştürülür; ilk düzenleme yeni kayıt anahtarına yazılır ve eski taslak yedek kalır.
 
 ## Yapı
 
-`dist/score-document.js` sürümlü belgeyi doğrular, JSON'a çevirir ve eski taslakları **kaynak veriyi değiştirmeden** dönüştürür. `dist/score-timeline.js` bu belgeden arayüz ve ilerideki ses motoru için ortak zaman çizelgesi çıkarır.
+`dist/score-document.js` sürümlü belgeyi doğrular, JSON'a çevirir ve eski taslakları **kaynak veriyi değiştirmeden** dönüştürür. `dist/score-timeline.js` bu belgeden arayüz ve ses motoru için ortak zaman çizelgesi çıkarır.
 
 - Belge: `format`, `version`, `ppq`, `bpm`, `meter`, `tuning`, `events`.
 - Akort: 1. telden 6. tele MIDI perde numaraları.
@@ -14,11 +14,11 @@ Bu adım yalnızca veri sözleşmesini kurar. Mevcut tek sesli editör ve ses mo
 - Akor: aynı adımda farklı tellerde birden fazla nota.
 - Zaman: bir dörtlük 960 tick. Sekizlik 480, noktalı dörtlük 1440, sekizlik üçleme 320 tick. Süreler kayan noktalı vuruş toplamlarıyla tutulmaz.
 
-Şimdilik tek gitar, altı tel, 0–24 perde ve en fazla 128 adım desteklenir. Ölçü hesaplaması adımın başlangıcını konumlandırır; ölçüyü aşan notaları henüz bölmez veya bağ işareti üretmez.
+Tek gitar, altı tel, 0–24 perde, en fazla 128 adım ve 512 ölçü desteklenir. Çizimde ölçüyü aşan adımlar parçalara ayrılıp devam işaretiyle gösterilir; aynı adım kimliği ve tek ses başlangıcı korunur.
 
 ## Teknik verisi
 
-Aşağıdaki kayıt biçimleri doğrulanabilir; bunların **tab çizimi ve ses yorumu henüz yoktur**:
+Aşağıdaki teknikler doğrulanır, tabda işaretlenir ve sentetik olarak önizlenir:
 
 ```json
 [
@@ -32,7 +32,7 @@ Aşağıdaki kayıt biçimleri doğrulanabilir; bunların **tab çizimi ve ses y
 ]
 ```
 
-Bu liste tek notaya aynı anda uygulanacak bir kombinasyon değildir. Ölü nota tek başına kullanılır; hammer-on ve pull-off hedefleri başlangıç perdesine göre doğru yönde olmalıdır. Slide/hammer-on/pull-off için bir notada en fazla bir hedef geçiş tanımlanabilir. Daha ayrıntılı bend eğrileri, let ring, harmonikler ve bir sonraki nota bağlantıları sonraki adımlardır.
+Bu liste tek notaya aynı anda uygulanacak bir kombinasyon değildir. Ölü nota tek başına kullanılır; hammer-on ve pull-off hedefleri başlangıç perdesine göre doğru yönde olmalıdır. Bir notada bend veya slide/hammer-on/pull-off geçişinden biri seçilir; vibrato bunlarla birlikte kullanılabilir. Daha ayrıntılı bend eğrileri, let ring, harmonikler ve bir sonraki nota bağlantıları sonraki adımlardır.
 
 ## Veri kaybını önleme
 
@@ -41,12 +41,18 @@ Bu liste tek notaya aynı anda uygulanacak bir kombinasyon değildir. Ölü nota
 - JSON işlemleri nota, akor, sus ve teknik bilgilerini korur.
 - Doğrulama ve derleme yeni nesneler üretir; kaynak belgeyi değiştirmez.
 
-## Sıradaki küçük adım
+## Uygulama katmanları
 
-Önce editör durumunu bu modele geçirmek ve aynı sütunda akor yazmayı açmak. Ardından yalnızca vibratonun çizimini ve sesini eklemek. Diğer teknikler aynı yöntemle tek tek geliştirilecek.
+- `score-session.js`: doğrulanan, atomik düzenleme işlemleri ve belge düzeyinde geri al/yinele.
+- `score-storage.js`: yeni kayıt anahtarı ve eski taslağı koruyan geçiş.
+- `score-grid.js` / `score-notation.js`: ölçüler, akorlar, teknik işaretleri ve devam parçaları.
+- `score-audio.js` / `score-player.js`: eşzamanlı akor sesleri, zarf, vibrato ve perde geçişleri.
+- `tab-editor.js`: kullanıcı kontrollerini bu katmanlara bağlar.
+
+Bend miktarı yarım ses (semitone), vibrato derinliği cent, hızı Hz ile tutulur. Slide/hammer-on/pull-off hedefi aynı sesin süresinin içinde uygulanır; ayrı nota bağlantısı değildir. Sesler sentetiktir; slide frekans rampası, hammer-on/pull-off koparmasız hedef frekans değişimi kullanır. Gerçek gitar sample kütüphanesi, çoklu enstrüman, değişken ölçü/tempo ve tekrar işaretleri bu sürümde yoktur.
 
 ## English
 
-This first infrastructure step introduces a versioned score document and a shared timeline compiler. It supports note/chord/rest data, integer tick durations, meter positions, tuning, and validated technique metadata. The existing editor, draft storage, and audio engine are not switched to this format yet. No new technique UI or technique playback is claimed.
+The versioned score document is now used by editing, storage, notation, and synthesized playback. Chord voices share an event; an empty event is a rest. Measure splitting preserves event identity and does not retrigger the audio. Pitch transitions occur within the current event, rather than linking separately entered notes. Undo/redo includes chords, techniques, tempo and meter. JSON round-trips retain the full score; legacy drafts remain backed up under their old key.
 
-Unknown versions, fields, and techniques are rejected to prevent silent data loss. The legacy migration adapter is pure: it never overwrites browser drafts. Next steps are migrating editor state, enabling chord input, and implementing vibrato notation and playback before adding other techniques individually.
+Playback uses a harmonic oscillator, filtering, amplitude envelopes and pitch automation. It is a synthetic preview, not a sampled or physically complete guitar. Multiple instruments, variable meter/tempo maps, repeats and full Guitar Pro/MusicXML support are future work.

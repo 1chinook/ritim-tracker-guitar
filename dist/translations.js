@@ -1,5 +1,47 @@
 // Türkçe metinler aynı zamanda çeviri anahtarıdır. Dinamik değerler {ad} ile belirtilir.
 export const english = {
+  "Aynı sütundaki farklı tellere tıklayarak akor oluştur. Notayı seçip tekniklerini düzenle; yeni adım için + işaretini kullan.":
+    "Click different strings in the same column to build a chord. Select a note to edit its techniques; use + for a new step.",
+  "Ölçü ve seçili notanın teknikleri":
+    "Time signature and selected note techniques",
+  Ölçü: "Time signature",
+  "Perde geçişi": "Pitch transition",
+  Normal: "Normal",
+  "Bend (yarım ses)": "Bend (semitones)",
+  "Hedef perde": "Target fret",
+  "Ölü nota ×": "Dead note ×",
+  "Vibrato ayarları": "Vibrato settings",
+  "Vibrato derinliği (cent)": "Vibrato depth (cents)",
+  "Vibrato hızı (Hz)": "Vibrato rate (Hz)",
+  "Slide, hammer-on ve pull-off hedefi aynı notanın süresi içinde duyulur. Hammer-on hedefi daha yüksek, pull-off hedefi daha düşük perde olmalı.":
+    "Slide, hammer-on, and pull-off reach their target within this note's duration. Hammer-on targets must be higher; pull-off targets must be lower.",
+  "Seçili telin notasını sil": "Remove note on selected string",
+  "Projeyi JSON indir": "Download project JSON",
+  "JSON proje aç": "Open JSON project",
+  "Ölçü {number} · {meter}": "Measure {number} · {meter}",
+  "Taslak okunamadı. Eski kayıt korunuyor; yeni çalışmanı JSON olarak indir.":
+    "Could not read the draft. The old data is preserved; download new work as JSON.",
+  "Önce bir adım seç.": "Select a step first.",
+  "Teknik değerlerini kontrol et. Hedef perde ve teknik yönü uyumlu olmalı.":
+    "Check the technique settings. The target fret must match the direction of the technique.",
+  "JSON dosyası en fazla 1 MB olabilir.":
+    "The JSON file must be no larger than 1 MB.",
+  "Dosya okunamadı. Desteklenen bir Ritim İzi JSON dosyası seç.":
+    "Could not read this file. Choose a supported Ritim İzi JSON file.",
+  "Teknikler sentetik olarak önizlenir. Delete seçili telin notasını, Shift+Delete tüm adımı siler. Ölçü sınırını aşan nota ↝ işaretiyle devam eder. JSON dosyası akorları ve teknikleri korur; bu tab henüz performans analiziyle eşleştirilmez.":
+    "Techniques use synthesized previews. Delete removes the selected string's note; Shift+Delete removes the whole step. A note crossing a bar continues with ↝. JSON preserves chords and techniques; this tab is not yet matched against performance audio.",
+  "Klavye: sayılar = perde · ← → = adım · ↑ ↓ = tel · Delete = nota sil · Shift+Delete = adım sil · Ctrl/⌘ Z = geri al":
+    "Keyboard: digits = fret · ← → = step · ↑ ↓ = string · Delete = remove note · Shift+Delete = remove step · Ctrl/⌘ Z = undo",
+  "Otuzikilik · 1/32": "Thirty-second · 1/32",
+  "Onaltılık · 1/16": "Sixteenth · 1/16",
+  "Sekizlik üçleme": "Eighth-note triplet",
+  "Sekizlik · 1/8": "Eighth · 1/8",
+  "Dörtlük üçleme": "Quarter-note triplet",
+  "Noktalı sekizlik": "Dotted eighth",
+  "Dörtlük · 1/4": "Quarter · 1/4",
+  "Noktalı dörtlük": "Dotted quarter",
+  "İkilik · 1/2": "Half · 1/2",
+  "Birlik · 1/1": "Whole · 1/1",
   "Tablodaki + işaretine bas, ardından perde numarasını yaz veya aşağıdan seç. Notaya tıklayarak düzenle; değişiklikler otomatik uygulanır.":
     "Click + in the tab, then type a fret number or choose one below. Click a note to edit it; changes apply automatically.",
   "Yeni nota +": "New note +",

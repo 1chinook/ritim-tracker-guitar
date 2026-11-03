@@ -108,6 +108,12 @@ function validateVoice(voice, path) {
   );
   const types = techniques.map((effect) => effect.type);
   requireValue(
+    !types.includes("bend") ||
+      !types.some((type) => ["slide", "hammerOn", "pullOff"].includes(type)),
+    path,
+    "Choose bend or a target transition for one note",
+  );
+  requireValue(
     new Set(types).size === types.length,
     path,
     "Duplicate techniques",
@@ -211,6 +217,17 @@ export function validateScore(score) {
     );
     return { id: event.id, durationTicks: event.durationTicks, notes };
   });
+  const totalTicks = events.reduce(
+    (sum, event) => sum + event.durationTicks,
+    0,
+  );
+  const measureTicks =
+    (score.meter.beats * ticksPerBeat * 4) / score.meter.unit;
+  requireValue(
+    Math.ceil(totalTicks / measureTicks) <= 512,
+    "score.events",
+    "At most 512 measures are supported",
+  );
   return {
     format: scoreFormat,
     version: 1,
