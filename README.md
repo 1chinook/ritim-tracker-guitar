@@ -4,7 +4,7 @@
 
 Gitar egzersizlerini mikrofon veya ses dosyası üzerinden inceleyen tarayıcı uygulaması.
 
-Bu proje henüz ilkel bir ilk sürümdür; öğrenme ve deneme amacıyla geliştirilmektedir. Tab editörü, sentetik oynatma ve akort cihazı temel prototiplerdir. Gerçek mikrofon ve tarayıcıyla uçtan uca kullanım henüz tam doğrulanmamıştır; tab ile performansı nota nota eşleştirme desteklenmez.
+Bu proje henüz ilkel bir ilk sürümdür; öğrenme ve deneme amacıyla geliştirilmektedir. Tab editörü, gitar örnekleriyle oynatma ve akort cihazı temel prototiplerdir. Gerçek mikrofon ve tarayıcıyla uçtan uca kullanım henüz tam doğrulanmamıştır; tab ile performansı nota nota eşleştirme desteklenmez.
 
 Ana sayfa akort, kayıt ve analiz araçlarını içerir. Tab editörü üst menüdeki bağlantıdan açılan ayrı `editor.html` sayfasındadır. Dil ve görünüm, etiketli seçim menülerinden değiştirilir.
 
@@ -25,7 +25,11 @@ Tarayıcıda http://127.0.0.1:4173 adresini aç. Mikrofon için localhost veya H
 
 ### Tab editörü ve oynatma
 
-Editör artık sürümlü nota belgesini kullanır. Aynı sütundaki farklı tellerdeki boş hücrelere tıklayarak akor oluştur; mevcut notaya tıklayıp perde ve tekniklerini düzenle. Yeni sütun için `+` veya “Yeni nota” kullan. “Sus ekle” ayrı bir sessiz adım ekler.
+Editör sürümlü nota belgesini kullanır. Çalma, tempo ve ses seçimi üstte; tab hemen altındadır. Nota teknikleri ile dosya işlemleri kapalı açılır bölümlerdedir.
+
+Hızlı girişte bir tel ve süre seçip `0 3 5 7 - 5` yaz, “Diziyi ekle”ye veya Enter'a bas. `-` ve `r` sus ekler. Dizi seçili adımdan sonra, seçim yoksa sona eklenir ve tek işlemde geri alınır. Yanlış girişte kısmi ekleme yapılmaz.
+
+Hücreye tıklamak yalnızca imleci taşır. Perde numarası yazmak o tele nota ekler veya var olan notayı değiştirir; aynı sütundaki diğer teller korunur. Enter/sağ ok sonraki adıma, yukarı/aşağı ok diğer tellere geçer. Son sütundaki `+` hücresini seçip perde yazmak yeni adım oluşturur. Boşluk çalar/durdurur. “Sus ekle” sona sessiz adım ekler.
 
 - Her sütun bir adım, içindeki teller eşzamanlı çalan seslerdir. Süre değişikliği bütün akoru etkiler.
 - Vibrato derinliği/hızı, bend miktarı, slide, hammer-on ve pull-off hedef perdesi seçilebilir. Palm mute ve ölü nota da desteklenir.
@@ -38,7 +42,7 @@ Editör artık sürümlü nota belgesini kullanır. Aynı sütundaki farklı tel
 
 Tab odaktayken rakamlar perde girer; 10–24 için iki rakamı hızlı yaz. Sol/sağ adımlar, yukarı/aşağı teller arasında gezinir. Delete/Backspace seçili telin notasını, Shift+Delete tüm adımı siler. Son ses silindiğinde adım sus olarak kalır. Ctrl/⌘ Z geri alır, Ctrl/⌘ Shift Z yineler. BPM, ölçü, teknik ve akor değişiklikleri de geri alınabilir.
 
-“Tabı çal”, akorları aynı anda ve teknikleri sentetik olarak önizler. Ses gerçek gitar örneklerinden üretilmez. Özellikle hammer-on/pull-off basitleştirilmiş koparmasız perde değişimleridir; profesyonel bir fiziksel gitar modeli değildir.
+“Çal”, yerel gitar ses örnekleriyle akorları ve teknikleri önizler. Varsayılan Distortion, alternatif Akustik'tir. Yaklaşık 708 KiB'lık iki küçük örnek bankası uygulamayla birlikte gelir; oynatma dışarıdan ses indirmez. Bend, slide, vibrato ve hammer-on/pull-off bu kayıtların perdesi değiştirilerek yaklaşık uygulanır; uzun notalar örneğin doğal ses uzunluğuyla sınırlıdır. Kaynak ve lisans: [ses atıfları](dist/sounds/CREDITS.md).
 
 Taslak yeni `ritim-score-v1` anahtarına kaydedilir; eski `ritim-tab-draft-v1` taslağı yedek olarak korunur. Akor ve teknikleri tam saklamak için JSON indir/aç özelliğini kullan. Dosya açma geri alınabilir. Bozuk veya gelecekteki kayıt üzerine sessizce yazılmaz. Metin tabı insan tarafından okunabilir bir çıktıdır; yeniden içe aktarılmaz. Bu editör henüz kayıtla nota nota performans karşılaştırması yapmaz.
 
@@ -91,7 +95,7 @@ Sıradaki geliştirmeler: Guitar Pro/MusicXML, çoklu enstrüman, daha doğal gi
 
 Ritim İzi is a browser-based guitar practice tool that analyzes microphone recordings or uploaded audio files. It estimates tempo and rhythmic consistency for exercises played with evenly spaced notes.
 
-This is an early, rudimentary prototype built for learning and experimentation. The tab editor, synthesized playback, and tuner provide basic functionality. End-to-end use with a real microphone and browser has not been fully verified, and note-by-note alignment between the tab and performance is not supported.
+This is an early, rudimentary prototype built for learning and experimentation. The tab editor, sample-based playback, and tuner provide basic functionality. End-to-end use with a real microphone and browser has not been fully verified, and note-by-note alignment between the tab and performance is not supported.
 
 The main page contains the tuner, recording, and analysis tools. The tab editor lives on a separate `editor.html` page linked from the header. Labeled language and appearance menus are available on both pages.
 
@@ -112,7 +116,11 @@ Use the header controls to switch between Turkish and English, or between light 
 
 #### Tab editor and playback
 
-The editor now uses the versioned score document. Click empty cells on different strings in the same column to build chords. Select an existing note to edit its fret and techniques. Use `+` or “New note” for a new step, or add a separate rest.
+The editor uses the versioned score document. Playback, tempo and guitar sound sit above the tab; techniques and file tools are in closed disclosure panels.
+
+For quick entry, choose a string and duration, type `0 3 5 7 - 5`, then press “Insert sequence” or Enter. `-` and `r` are rests. The sequence is inserted after the selected step, or appended when nothing is selected. The entire insertion is one undo action; invalid input leaves the score intact.
+
+Clicking a cell only moves the cursor. Type a fret to add or edit its note while preserving other strings in the chord. Enter/right advances; up/down changes strings. Select a final `+` cell and type a fret to append a step. Space plays/stops; “Add rest” appends a silent step.
 
 - Each column is one event with simultaneous notes. Changing its duration affects the whole chord.
 - Edit vibrato depth/rate, bend amount, slide, hammer-on and pull-off target frets, palm mute, and dead notes.
@@ -125,7 +133,7 @@ The editor now uses the versioned score document. Click empty cells on different
 
 With the tab focused, type fret digits (two digits quickly for 10–24). Left/right arrows navigate steps; up/down navigate strings. Delete/Backspace removes one string's note, Shift+Delete the entire step. Removing the last voice leaves a rest. Ctrl/⌘ Z undoes and Ctrl/⌘ Shift Z redoes. Tempo, meter, techniques and chords are included in undo/redo.
 
-Playback previews simultaneous chords and techniques using synthesis, not recorded guitar samples. Hammer-ons and pull-offs are simplified legato pitch changes, not a professional physical guitar model.
+Playback uses bundled guitar soundfont samples, with Distortion selected by default and Acoustic available. Both small sample banks together take about 708 KiB and need no third-party requests during playback. Bend, slide, vibrato and hammer-on/pull-off are approximate pitch changes on these recordings; long notes are limited by each sample's natural length. See [sample credits and license](dist/sounds/CREDITS.md).
 
 The new draft is saved under `ritim-score-v1`; the old `ritim-tab-draft-v1` draft remains as a backup. Download/open JSON to preserve full chords and techniques; opening a file is undoable. Corrupt or future-version drafts are not silently overwritten. Text tabs are readable exports and cannot be re-imported. Recorded performance is not yet aligned against this score.
 

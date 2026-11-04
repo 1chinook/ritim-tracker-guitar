@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { planVoice } from "../dist/score-audio.js";
 import { ScorePlayer } from "../dist/score-player.js";
 import { createEmptyScore } from "../dist/score-document.js";
+import { sampleMidi } from "../dist/guitar-samples.js";
 
 const note = (techniques = []) => ({
   string: 1,
@@ -126,6 +127,8 @@ function mockAudio(context) {
     createBufferSource() {
       const result = {
         ...node(),
+        playbackRate: parameter(),
+        detune: parameter(),
         start(time) {
           this.startTime = time;
         },
@@ -150,6 +153,13 @@ function mockAudio(context) {
   const player = new ScorePlayer({
     onStep: (id) => steps.push(id),
     onStop: () => stops++,
+    loadSamples: async (context, notes) =>
+      new Map(
+        notes.map((note) => [
+          sampleMidi(note.midi),
+          { midi: sampleMidi(note.midi), buffer: { guitar: true } },
+        ]),
+      ),
   });
   context.after(() => {
     player.stop();
@@ -201,16 +211,16 @@ function scoreFixture() {
 test("Akor aynı saatte başlar, vibrato perdeye bağlanır ve sus yeni ses oluşturmaz", async (context) => {
   const mocked = mockAudio(context);
   await mocked.player.play(scoreFixture());
-  const voices = mocked.oscillators.filter((oscillator) => oscillator.wave);
+  const voices = mocked.buffers.filter((source) => source.buffer.guitar);
   assert.equal(voices.length, 2);
   assert.equal(voices[0].startTime, 10.08);
   assert.equal(voices[1].startTime, voices[0].startTime);
-  assert.ok(voices[0].frequency.calls.some(([kind]) => kind === "ramp"));
-  const lfo = mocked.oscillators.find((oscillator) => !oscillator.wave);
+  assert.ok(voices[0].playbackRate.calls.some(([kind]) => kind === "ramp"));
+  const lfo = mocked.oscillators[0];
   assert.equal(lfo.frequency.value, 5);
   assert.equal(lfo.connections[0].connections[0], voices[1].detune);
-  assert.equal(mocked.buffers.length, 1);
-  assert.equal(mocked.buffers[0].startTime, 11.08);
+  assert.equal(mocked.buffers.length, 3);
+  assert.equal(mocked.buffers[2].startTime, 11.08);
   mocked.audio.currentTime = 10.7;
   mocked.tick();
   assert.deepEqual(mocked.steps, ["rest"]);
@@ -229,6 +239,46 @@ test("Hazırlık sırasında durdurulan akor sonradan çalmaya başlamaz", async
   await pending;
   assert.equal(mocked.oscillators.length, 0);
   assert.equal(mocked.buffers.length, 0);
+  assert.equal(mocked.audio.state, "closed");
+  assert.equal(mocked.stops(), 1);
+});
+
+test("Örnek yüklenirken durdurmak isteği iptal eder ve geç gelen sesleri çalmaz", async (context) => {
+  const mocked = mockAudio(context);
+  const entered = Promise.withResolvers();
+  const held = Promise.withResolvers();
+  let signal;
+  mocked.player.loadSamples = async (
+    _context,
+    _notes,
+    _tone,
+    pendingSignal,
+  ) => {
+    signal = pendingSignal;
+    entered.resolve();
+    await held.promise;
+    return new Map();
+  };
+  const pending = mocked.player.play(scoreFixture(), "acoustic");
+  await entered.promise;
+  mocked.player.stop();
+  assert.equal(signal.aborted, true);
+  held.resolve();
+  await pending;
+  assert.equal(mocked.buffers.length, 0);
+  assert.equal(mocked.audio.state, "closed");
+});
+
+test("Örnek yükleme hatası çalmayı durdurur ve ses kaynaklarını kapatır", async (context) => {
+  const mocked = mockAudio(context);
+  mocked.player.loadSamples = async () => {
+    throw new Error("Sample unavailable");
+  };
+  await assert.rejects(
+    mocked.player.play(scoreFixture()),
+    /Sample unavailable/,
+  );
+  assert.equal(mocked.player.playing, false);
   assert.equal(mocked.audio.state, "closed");
   assert.equal(mocked.stops(), 1);
 });

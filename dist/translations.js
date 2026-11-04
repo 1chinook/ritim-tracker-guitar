@@ -1,5 +1,39 @@
 // Türkçe metinler aynı zamanda çeviri anahtarıdır. Dinamik değerler {ad} ile belirtilir.
 export const english = {
+  "▶ Çal": "▶ Play",
+  "■ Durdur": "■ Stop",
+  "Tempo · BPM": "Tempo · BPM",
+  "Gitar sesi": "Guitar sound",
+  Akustik: "Acoustic",
+  Tel: "String",
+  "Hızlı yaz": "Quick entry",
+  "Diziyi ekle": "Insert sequence",
+  "Perdeleri boşlukla ayır. Sus için - yaz. Dizi, seçili adımdan sonra eklenir; seçim yoksa sona eklenir.":
+    "Separate frets with spaces. Use - for a rest. The sequence is inserted after the selected step, or appended when nothing is selected.",
+  "Hücre seç → perdeyi yaz → Enter ile ilerle. ↑ ↓ tel değiştirir. Boşluk çalar / durdurur.":
+    "Select a cell → type a fret → Enter to advance. ↑ ↓ changes strings. Space plays / stops.",
+  "Yeni nota · Bir perde yaz veya hızlı giriş alanını kullan.":
+    "New note · Type a fret or use quick entry.",
+  "Sona nota ekle": "Append note",
+  "Sona git": "Go to end",
+  "Notayı sil": "Delete note",
+  "Nota teknikleri ve diğer araçlar": "Note techniques and more tools",
+  "Önce tabdan bir nota seç. Teknikler yalnızca seçili telin notasına uygulanır.":
+    "Select a note in the tab first. Techniques apply only to the selected string's note.",
+  "Seçili adımı çoğalt": "Duplicate selected step",
+  "Delete notayı, Shift+Delete adımı siler. Ctrl/⌘ Z geri alır. Ölçüyü aşan nota ↝ ile devam eder.":
+    "Delete removes a note; Shift+Delete removes a step. Ctrl/⌘ Z undoes. Notes crossing a bar continue with ↝.",
+  "Dosya aç ve indir": "Open and download files",
+  "JSON akorları ve teknikleri korur. Metin tabı yalnızca dışa aktarılır.":
+    "JSON preserves chords and techniques. Text tabs are export only.",
+  "Önce perde numaralarını yaz. Örnek: 0 3 5 7":
+    "Enter fret numbers first. Example: 0 3 5 7",
+  "Önce bir tel seç.": "Select a string first.",
+  "0–24 arasında perdeler yaz; sus için - kullan.":
+    "Enter frets from 0 to 24; use - for rests.",
+  "Gitar sesleri hazırlanıyor…": "Preparing guitar sounds…",
+  "Gitar sesleri yüklenemedi. Sayfayı yenileyip tekrar dene.":
+    "Guitar sounds could not be loaded. Refresh the page and try again.",
   "Aynı sütundaki farklı tellere tıklayarak akor oluştur. Notayı seçip tekniklerini düzenle; yeni adım için + işaretini kullan.":
     "Click different strings in the same column to build a chord. Select a note to edit its techniques; use + for a new step.",
   "Ölçü ve seçili notanın teknikleri":

@@ -133,6 +133,9 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     "editorRemoveVoice",
     "editorJson",
     "editorImport",
+    "editorRiff",
+    "editorInsertRiff",
+    "editorTone",
   ];
   const elements = Object.fromEntries(ids.map((id) => [id, new Element()]));
   Object.assign(elements.editorBpm, { value: "90", tag: "input" });
@@ -161,16 +164,21 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
       '[data-event="new"][data-string="1"]',
     );
     elements.editorTable.fire("click", { target: addCell });
-    assert.equal(notes().length, 6);
-    assert.deepEqual(notes()[5].notes, [
-      { string: 1, fret: 0, techniques: [] },
-    ]);
+    assert.equal(
+      saved.has("ritim-score-v1"),
+      false,
+      "Hücre seçmek taslağı değiştirmemeli",
+    );
     const key = (value) =>
       elements.tabEditor.fire("keydown", {
         target: document.activeElement,
         key: value,
       });
     key("1");
+    assert.equal(notes().length, 6);
+    assert.deepEqual(notes()[5].notes, [
+      { string: 1, fret: 1, techniques: [] },
+    ]);
     key("2");
     assert.equal(notes()[5].notes[0].fret, 12);
     elements.editorUndo.click();
@@ -182,6 +190,12 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
       `[data-event="${currentId}"][data-string="2"]`,
     );
     elements.editorTable.fire("click", { target: chordCell });
+    assert.equal(
+      notes()[5].notes.length,
+      1,
+      "Boş hücreye tıklamak nota eklememeli",
+    );
+    key("5");
     assert.equal(
       notes()[5].notes.length,
       2,
@@ -203,6 +217,29 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     elements.editorRest.click();
     assert.deepEqual(notes().at(-1).notes, []);
     assert.equal(notes().at(-1).durationTicks, 960);
+    const beforeRiff = saved.get("ritim-score-v1");
+    elements.editorString.value = "6";
+    elements.editorRiff.value = "0 3 5 - 12";
+    elements.editorInsertRiff.click();
+    assert.deepEqual(
+      notes()
+        .slice(-5)
+        .map((event) => event.notes[0]?.fret ?? null),
+      [0, 3, 5, null, 12],
+    );
+    elements.editorUndo.click();
+    assert.equal(
+      saved.get("ritim-score-v1"),
+      beforeRiff,
+      "Dizi tek işlemde geri alınmalı",
+    );
+    elements.editorRiff.value = "0 99";
+    elements.editorInsertRiff.click();
+    assert.equal(
+      saved.get("ritim-score-v1"),
+      beforeRiff,
+      "Hatalı diziden hiçbir nota eklenmemeli",
+    );
     const beforeImport = saved.get("ritim-score-v1");
     const imported = JSON.parse(beforeImport);
     imported.bpm = 120;

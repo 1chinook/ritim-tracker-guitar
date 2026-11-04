@@ -10,6 +10,7 @@ import { ScorePlayer } from "./score-player.js";
 import { renderScoreGrid } from "./score-grid.js";
 import { compileScore } from "./score-timeline.js";
 import { setText } from "./preferences.js";
+import { parseRiff } from "./riff-input.js";
 
 const example = migrateLegacyDraft({
   version: 1,
@@ -210,19 +211,20 @@ export function initializeTabEditor({ onStart, onStop }) {
       "#editorSelection",
       selectedEvent()
         ? "Seçili adım: {step} · Değişiklikler otomatik uygulanır."
-        : "Yeni nota · Tablodaki + işaretine basarak ekle.",
+        : "Yeni nota · Bir perde yaz veya hızlı giriş alanını kullan.",
       {
         step:
           session.document.events.findIndex((event) => event.id === selected) +
           1,
       },
     );
-    if (restore?.id)
-      grid
-        .querySelector(
-          `[data-event="${restore.id}"][data-string="${restore.string ?? fields.string.value}"]`,
-        )
-        ?.focus({ preventScroll: true });
+    if (restore?.id) {
+      const cell = grid.querySelector(
+        `[data-event="${restore.id}"][data-string="${restore.string ?? fields.string.value}"]`,
+      );
+      cell?.focus({ preventScroll: true });
+      if (focus) cell?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
   }
 
   function edit(action, focus = false) {
@@ -282,24 +284,17 @@ export function initializeTabEditor({ onStart, onStop }) {
     const string = cell.dataset.string;
     if (string) fields.string.value = string;
     if (cell.dataset.event === "new") {
-      add();
+      selected = null;
+      syncFields();
+      render({ id: "new", string: fields.string.value });
       return;
     }
     selected = cell.dataset.event;
     if (!string)
       fields.string.value = selectedEvent().notes[0]?.string ?? "rest";
-    const existing = selectedVoice();
-    if (string && !existing) {
-      // Boş tel hücresine tıklamak aynı akora yeni ses ekler; diğer teller korunur.
-      fields.pitch.value = "none";
-      fields.vibrato.checked = false;
-      fields.mute.checked = false;
-      fields.dead.checked = false;
-      edit(() => session.setVoice(selected, readVoice()), true);
-    } else {
-      syncFields();
-      render({ id: selected, string: fields.string.value });
-    }
+    // Tıklama sadece imleci taşır. Nota ancak perde yazıldığında oluşur.
+    syncFields();
+    render({ id: selected, string: fields.string.value });
   });
 
   function enterFret(fret) {
@@ -316,6 +311,27 @@ export function initializeTabEditor({ onStart, onStop }) {
     }
   });
   find("editorAdd").addEventListener("click", () => add());
+  function insertRiff() {
+    edit(() => {
+      const input = find("editorRiff");
+      const voices = parseRiff(input.value, Number(fields.string.value));
+      selected = session.insertSequence(
+        voices,
+        Number(fields.duration.value),
+        selected,
+      );
+      input.value = "";
+      digitBuffer = "";
+      syncFields();
+    }, true);
+  }
+  find("editorInsertRiff").addEventListener("click", insertRiff);
+  find("editorRiff").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      insertRiff();
+    }
+  });
   find("editorRest").addEventListener("click", () => add(true));
   find("editorNew").addEventListener("click", () => {
     selected = null;
@@ -404,6 +420,11 @@ export function initializeTabEditor({ onStart, onStop }) {
   );
 
   section.addEventListener("keydown", (event) => {
+    if (event.key === " " && grid.contains(event.target)) {
+      event.preventDefault();
+      find(player.playing ? "editorStop" : "editorPlay").click();
+      return;
+    }
     if (
       event.target.matches("input, select, textarea") ||
       blocked() ||
@@ -432,13 +453,13 @@ export function initializeTabEditor({ onStart, onStop }) {
       find(event.shiftKey ? "editorDelete" : "editorRemoveVoice").click();
       return;
     }
-    if (["ArrowLeft", "ArrowRight"].includes(event.key)) {
+    if (["ArrowLeft", "ArrowRight", "Enter"].includes(event.key)) {
       event.preventDefault();
       const events = session.document.events;
       const index = selected
         ? events.findIndex((item) => item.id === selected)
         : events.length;
-      const next = index + (event.key === "ArrowRight" ? 1 : -1);
+      const next = index + (event.key === "ArrowLeft" ? -1 : 1);
       selected = events[Math.max(0, next)]?.id ?? null;
       syncFields();
       render({
@@ -465,15 +486,14 @@ export function initializeTabEditor({ onStart, onStop }) {
     if (blocked() || !session.document.events.length) return;
     message();
     onStart();
-    setText("#editorPlaybackStatus", "Tab çalınıyor");
-    const starting = player.play(session.document);
+    setText("#editorPlaybackStatus", "Gitar sesleri hazırlanıyor…");
+    const starting = player.play(session.document, find("editorTone").value);
     render();
     try {
       await starting;
+      if (player.playing) setText("#editorPlaybackStatus", "Tab çalınıyor");
     } catch {
-      message(
-        "Sesli oynatma başlatılamadı. Tarayıcının ses iznini kontrol et.",
-      );
+      message("Gitar sesleri yüklenemedi. Sayfayı yenileyip tekrar dene.");
     }
   });
   find("editorStop").addEventListener("click", () => player.stop());

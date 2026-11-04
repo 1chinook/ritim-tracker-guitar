@@ -1,18 +1,21 @@
 import { compileScore } from "./score-timeline.js";
 import { scheduleVoice } from "./score-audio.js";
+import { loadGuitarSamples, sampleMidi } from "./guitar-samples.js";
 
 export class ScorePlayer {
   generation = 0;
   playing = false;
   context = null;
   animation = null;
+  pending = null;
 
-  constructor({ onStep, onStop }) {
+  constructor({ onStep, onStop, loadSamples = loadGuitarSamples }) {
     this.onStep = onStep;
     this.onStop = onStop;
+    this.loadSamples = loadSamples;
   }
 
-  async play(document) {
+  async play(document, tone = "distortion") {
     const timeline = compileScore(document);
     if (!timeline.events.length) return;
     this.stop();
@@ -21,7 +24,16 @@ export class ScorePlayer {
     try {
       const context = new AudioContext();
       this.context = context;
+      const pending = new AbortController();
+      this.pending = pending;
       await context.resume();
+      if (generation !== this.generation) return;
+      const samples = await this.loadSamples(
+        context,
+        timeline.events.flatMap((event) => event.notes),
+        tone,
+        pending.signal,
+      );
       if (generation !== this.generation) return;
       const start = context.currentTime + 0.08;
       for (const event of timeline.events) {
@@ -32,6 +44,7 @@ export class ScorePlayer {
             event.duration,
             start + event.start,
             event.notes.length,
+            samples.get(sampleMidi(note.midi)),
           ),
         );
       }
@@ -66,6 +79,8 @@ export class ScorePlayer {
     const wasPlaying = this.playing;
     this.playing = false;
     this.generation++;
+    this.pending?.abort();
+    this.pending = null;
     if (this.animation !== null) cancelAnimationFrame(this.animation);
     if (this.context && this.context.state !== "closed")
       void this.context.close().catch(() => {});

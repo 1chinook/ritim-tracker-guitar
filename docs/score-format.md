@@ -18,7 +18,7 @@ Tek gitar, altı tel, 0–24 perde, en fazla 128 adım ve 512 ölçü destekleni
 
 ## Teknik verisi
 
-Aşağıdaki teknikler doğrulanır, tabda işaretlenir ve sentetik olarak önizlenir:
+Aşağıdaki teknikler doğrulanır, tabda işaretlenir ve gitar örnekleri üzerinde yaklaşık olarak önizlenir:
 
 ```json
 [
@@ -49,10 +49,10 @@ Bu liste tek notaya aynı anda uygulanacak bir kombinasyon değildir. Ölü nota
 - `score-audio.js` / `score-player.js`: eşzamanlı akor sesleri, zarf, vibrato ve perde geçişleri.
 - `tab-editor.js`: kullanıcı kontrollerini bu katmanlara bağlar.
 
-Bend miktarı yarım ses (semitone), vibrato derinliği cent, hızı Hz ile tutulur. Slide/hammer-on/pull-off hedefi aynı sesin süresinin içinde uygulanır; ayrı nota bağlantısı değildir. Sesler sentetiktir; slide frekans rampası, hammer-on/pull-off koparmasız hedef frekans değişimi kullanır. Gerçek gitar sample kütüphanesi, çoklu enstrüman, değişken ölçü/tempo ve tekrar işaretleri bu sürümde yoktur.
+Bend miktarı yarım ses (semitone), vibrato derinliği cent, hızı Hz ile tutulur. Slide/hammer-on/pull-off hedefi aynı sesin süresinin içinde uygulanır; ayrı nota bağlantısı değildir. `guitar-samples.js` yerel Distortion veya Akustik kayıtlarını yükler. Perde geçişleri örneğin oynatma hızıyla, vibrato detune ile uygulanır; ölü nota kısa filtreli gürültüdür. Uzun notalar örneklerin doğal uzunluğuyla sınırlıdır. Kaynak ve lisans `dist/sounds/CREDITS.md` dosyasındadır. Çoklu enstrüman, değişken ölçü/tempo ve tekrar işaretleri bu sürümde yoktur.
 
 ## English
 
-The versioned score document is now used by editing, storage, notation, and synthesized playback. Chord voices share an event; an empty event is a rest. Measure splitting preserves event identity and does not retrigger the audio. Pitch transitions occur within the current event, rather than linking separately entered notes. Undo/redo includes chords, techniques, tempo and meter. JSON round-trips retain the full score; legacy drafts remain backed up under their old key.
+The versioned score document is used by editing, storage, notation, and sample-based playback. Chord voices share an event; an empty event is a rest. Measure splitting preserves event identity and does not retrigger the audio. Pitch transitions occur within the current event, rather than linking separately entered notes. Undo/redo includes chords, techniques, tempo and meter. JSON round-trips retain the full score; legacy drafts remain backed up under their old key.
 
-Playback uses a harmonic oscillator, filtering, amplitude envelopes and pitch automation. It is a synthetic preview, not a sampled or physically complete guitar. Multiple instruments, variable meter/tempo maps, repeats and full Guitar Pro/MusicXML support are future work.
+Playback uses bundled Distortion or Acoustic guitar samples, filtering, amplitude envelopes and pitch automation. A short filtered noise burst approximates dead notes. Techniques are approximate and long notes are limited by the natural sample length. See `dist/sounds/CREDITS.md` for attribution. Multiple instruments, variable meter/tempo maps, repeats and full Guitar Pro/MusicXML support are future work.

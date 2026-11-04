@@ -33,28 +33,34 @@ export function planVoice(note, duration) {
     pitch,
     length,
     dead,
-    cutoff: muted ? 650 : 3600,
+    cutoff: dead ? 900 : muted ? 650 : 10000,
     vibrato: has("vibrato") ?? null,
   };
 }
 
-export function scheduleVoice(context, note, duration, start, chordSize) {
+export function scheduleVoice(
+  context,
+  note,
+  duration,
+  start,
+  chordSize,
+  sample,
+) {
   const plan = planVoice(note, duration);
+  if (!plan.dead && !sample) throw new Error("Missing guitar sample");
   const gain = context.createGain();
   const filter = context.createBiquadFilter();
   filter.type = "lowpass";
   filter.frequency.setValueAtTime(plan.cutoff, start);
-  filter.frequency.exponentialRampToValueAtTime(
-    Math.max(250, plan.cutoff * 0.35),
-    start + plan.length,
-  );
-  const volume = 0.22 / Math.sqrt(chordSize);
-  const attack = Math.min(0.006, plan.length / 4);
+  const volume = 0.65 / Math.sqrt(chordSize);
+  const attack = Math.min(0.004, plan.length / 4);
+  const release = Math.min(0.035, plan.length / 3);
   gain.gain.setValueAtTime(0.0001, start);
   gain.gain.exponentialRampToValueAtTime(volume, start + attack);
+  gain.gain.setValueAtTime(volume, start + plan.length - release);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + plan.length);
   filter.connect(gain).connect(context.destination);
-  let source;
+  const source = context.createBufferSource();
   let vibrato;
   let depth;
   if (plan.dead) {
@@ -63,26 +69,22 @@ export function scheduleVoice(context, note, duration, start, chordSize) {
       Math.ceil(context.sampleRate * 0.08),
       context.sampleRate,
     );
-    const samples = buffer.getChannelData(0);
-    for (let index = 0; index < samples.length; index++)
-      samples[index] = Math.random() * 2 - 1;
-    source = context.createBufferSource();
+    const data = buffer.getChannelData(0);
+    for (let index = 0; index < data.length; index++)
+      data[index] = Math.random() * 2 - 1;
     source.buffer = buffer;
   } else {
-    source = context.createOscillator();
-    // Zamanla süzülen harmonikler koparılan tel için hafif bir sentetik önizleme verir.
-    const real = new Float32Array(16);
-    const imaginary = Float32Array.from({ length: 16 }, (_, index) =>
-      index ? 1 / index ** 1.6 : 0,
-    );
-    source.setPeriodicWave(context.createPeriodicWave(real, imaginary));
+    source.buffer = sample.buffer;
+    const rootFrequency = midiToFrequency(sample.midi);
+    // Kayıt yeniden örneklenirken bend ve geçişler aynı ses üzerinde uygulanır.
     for (const point of plan.pitch) {
+      const rate = point.frequency / rootFrequency;
       if (point.ramp)
-        source.frequency.exponentialRampToValueAtTime(
-          point.frequency,
+        source.playbackRate.exponentialRampToValueAtTime(
+          rate,
           start + point.time,
         );
-      else source.frequency.setValueAtTime(point.frequency, start + point.time);
+      else source.playbackRate.setValueAtTime(rate, start + point.time);
     }
     if (plan.vibrato) {
       vibrato = context.createOscillator();

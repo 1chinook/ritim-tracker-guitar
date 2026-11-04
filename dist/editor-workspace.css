@@ -1,0 +1,169 @@
+/* Tab ve temel kontroller önde, ayrıntılar isteğe bağlı açılır. */
+body[data-page="editor"] .editor-section {
+  padding: 36px 5vw;
+  max-width: 1600px;
+  margin: auto;
+}
+body[data-page="editor"] .section-head {
+  align-items: center;
+  gap: 16px;
+}
+body[data-page="editor"] .editor-section h2 {
+  font-size: 36px;
+}
+.editor-transport,
+.transport-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.editor-transport {
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.editor-transport .editor-fields {
+  margin: 0;
+}
+.editor-transport label {
+  flex-direction: row;
+  align-items: center;
+}
+.editor-transport input {
+  width: 80px;
+}
+.riff-entry {
+  align-items: end;
+  margin-bottom: 8px;
+}
+.riff-input {
+  flex: 1;
+  min-width: 190px;
+}
+.riff-input input {
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 17px;
+  box-sizing: border-box;
+}
+.riff-entry button {
+  min-height: 42px;
+}
+.editor-card > .help {
+  margin: 8px 0;
+}
+.editor-scroll {
+  margin: 20px 0 10px;
+  border: 0;
+  padding: 0;
+}
+.score-measures {
+  gap: 14px;
+}
+.score-measure {
+  padding: 10px 8px;
+  border-right-width: 1px;
+  border-radius: 8px;
+}
+#editorTable .score-cell {
+  min-height: 36px;
+  font-size: 17px;
+  padding: 4px;
+  color: var(--ink);
+}
+#editorTable .score-cell:hover {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+#editorTable .add-cell {
+  color: var(--green);
+}
+#editorTable .voice-selected {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+#editorTable button:focus-visible,
+.editor-card button:focus-visible,
+.editor-drawer summary:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+.selection-toolbar {
+  margin: 18px 0;
+  padding: 14px;
+  background: var(--paper);
+  border-radius: 8px;
+}
+.selection-toolbar .selection-hint {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.selection-toolbar .editor-fields {
+  margin: 12px 0 0;
+  align-items: end;
+}
+.selection-toolbar button {
+  min-height: 40px;
+  font-size: 13px;
+  padding: 9px 12px;
+}
+.editor-drawer {
+  border-top: 1px solid var(--line);
+  padding: 18px 0;
+}
+.editor-drawer > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+}
+.editor-drawer[open] > summary {
+  margin-bottom: 18px;
+}
+.editor-drawer .technique-panel {
+  margin: 16px 0;
+}
+.editor-shortcuts {
+  display: block;
+  margin: 8px 0;
+}
+@media (max-width: 700px) {
+  body[data-page="editor"] .editor-section {
+    padding: 24px 14px;
+  }
+  .editor-card {
+    padding: 16px;
+  }
+  .editor-transport {
+    align-items: start;
+    gap: 16px;
+  }
+  .transport-settings {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .editor-transport label {
+    flex-direction: column;
+    align-items: start;
+  }
+  .riff-entry > label:not(.riff-input) {
+    flex: 1;
+  }
+  .riff-entry select {
+    width: 100%;
+  }
+  .riff-input {
+    flex-basis: calc(100% - 130px);
+    min-width: 140px;
+  }
+  .editor-shortcuts {
+    line-height: 1.7;
+  }
+  .selection-toolbar .editor-fields {
+    gap: 8px;
+  }
+}
