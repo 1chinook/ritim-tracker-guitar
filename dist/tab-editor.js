@@ -9,9 +9,10 @@ import { splitMeasures, exportScoreText, midiLabel } from "./score-notation.js";
 import { ScorePlayer } from "./score-player.js";
 import { renderScoreGrid } from "./score-grid.js";
 import { compileScore } from "./score-timeline.js";
-import { setText } from "./preferences.js";
+import { setText, t } from "./preferences.js";
 import { parseRiff } from "./riff-input.js";
 import { maximumNotes } from "./tab-model.js";
+import { selectionBounds, selectedRegion } from "./score-selection.js";
 
 const example = migrateLegacyDraft({
   version: 1,
@@ -29,14 +30,6 @@ export function initializeTabEditor({ onStart, onStop }) {
   const find = (id) => document.querySelector(`#${id}`);
   const section = find("tabEditor");
   const grid = find("editorTable");
-  const fretPad = find("editorFrets");
-  for (let fret = 0; fret <= 24; fret++) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.fret = String(fret);
-    button.textContent = String(fret);
-    fretPad.append(button);
-  }
   const fields = {
     string: find("editorString"),
     fret: find("editorFret"),
@@ -61,6 +54,11 @@ export function initializeTabEditor({ onStart, onStop }) {
   let digitBuffer = "";
   let digitTime = 0;
   let initialMessage = "";
+  let selectionAnchor = null;
+  let selectionFocus = null;
+  let clipboard = [];
+  let drag = null;
+  let inlineEditor = null;
   try {
     const draft = loadScoreDraft(localStorage);
     if (draft) session = new ScoreSession(draft.score);
@@ -77,6 +75,48 @@ export function initializeTabEditor({ onStart, onStop }) {
       (note) => note.string === Number(fields.string.value),
     );
   const blocked = () => unavailable || loading || player.playing;
+  const currentCell = () =>
+    selected ? { id: selected, string: Number(fields.string.value) } : null;
+  const bounds = () =>
+    selectionBounds(
+      session.document,
+      selectionAnchor ?? currentCell(),
+      selectionFocus ?? currentCell(),
+    );
+  const region = () => selectedRegion(session.document, bounds());
+  function clearRange() {
+    selectionAnchor = null;
+    selectionFocus = null;
+    drag = null;
+  }
+
+  function paintSelection() {
+    const area = bounds();
+    grid.querySelectorAll("[data-event][data-string]").forEach((cell) => {
+      const index = session.document.events.findIndex(
+        (event) => event.id === cell.dataset.event,
+      );
+      const string = Number(cell.dataset.string);
+      const included = Boolean(
+        area &&
+          index >= area.first &&
+          index <= area.last &&
+          string >= area.top &&
+          string <= area.bottom,
+      );
+      cell.classList.toggle("range-selected", included);
+      cell.classList.toggle(
+        "voice-selected",
+        cell.dataset.event === (selected ?? "new") &&
+          string === Number(fields.string.value),
+      );
+      cell.setAttribute("aria-pressed", String(included));
+      cell.parentElement?.classList.toggle(
+        "cursor-column",
+        cell.dataset.event === (selected ?? "new"),
+      );
+    });
+  }
 
   function message(source = "") {
     setText("#editorMessage", source);
@@ -165,7 +205,7 @@ export function initializeTabEditor({ onStart, onStop }) {
     };
   }
 
-  function render(focus = null) {
+  function render(focus = null, preserveGrid = false) {
     const focused = grid.contains(document.activeElement)
       ? document.activeElement
       : null;
@@ -174,23 +214,34 @@ export function initializeTabEditor({ onStart, onStop }) {
       (focused
         ? { id: focused.dataset.event, string: focused.dataset.string }
         : null);
-    renderScoreGrid(grid, session.document, {
-      selected,
-      active,
-      disabled: blocked(),
-      string: fields.string.value,
-    });
+    if (!preserveGrid) {
+      inlineEditor = null;
+      renderScoreGrid(grid, session.document, {
+        selected,
+        active,
+        disabled: blocked(),
+        string: fields.string.value,
+      });
+    }
+    paintSelection();
     section.querySelectorAll("[data-editor-control]").forEach((control) => {
       control.disabled = blocked();
     });
     const full = session.document.events.length >= maximumNotes;
     const event = selectedEvent();
-    for (const button of fretPad.children)
-      button.disabled = blocked() || (full && !event);
     find("editorNew").disabled = blocked() || full;
     find("editorRest").disabled = blocked() || full;
     find("editorNext").disabled =
       blocked() || !event || (full && event === session.document.events.at(-1));
+    find("editorEditFret").disabled = blocked() || (full && !event);
+    find("editorInsertBefore").disabled = blocked() || !event || full;
+    find("editorCopy").disabled = blocked() || !region().ids.length;
+    find("editorPaste").disabled =
+      blocked() ||
+      !clipboard.length ||
+      session.document.events.length + clipboard.length > maximumNotes;
+    find("editorRemoveVoice").disabled =
+      blocked() || !region().events.some((event) => event.notes.length);
     setText(
       "#editorDurationLabel",
       event ? "Bu adımın süresi" : "Yeni notanın süresi",
@@ -211,7 +262,6 @@ export function initializeTabEditor({ onStart, onStop }) {
     find("editorUndo").disabled = blocked() || !session.past.length;
     find("editorRedo").disabled = blocked() || !session.future.length;
     find("editorDelete").disabled = blocked() || !selectedEvent();
-    find("editorRemoveVoice").disabled = blocked() || !hasVoice;
     find("editorDuplicate").disabled =
       blocked() || !selectedEvent() || session.document.events.length >= 128;
     fields.bpm.value = session.document.bpm;
@@ -230,12 +280,17 @@ export function initializeTabEditor({ onStart, onStop }) {
       "#editorSelection",
       event
         ? "{step}. adım · {string}. tel"
-        : "Yeni nota · {string}. tel · Perde tuşları sona ekler.",
+        : "Yeni nota · {string}. tel · Çift tıklayarak perde yaz.",
       {
         step: session.document.events.indexOf(event) + 1,
         string: fields.string.value,
       },
     );
+    if (region().ids.length > 1 || region().strings.length > 1)
+      setText("#editorSelection", "{steps} adım · {strings} tel seçili", {
+        steps: region().ids.length,
+        strings: region().strings.length,
+      });
     if (restore?.id) {
       const cell = grid.querySelector(
         `[data-event="${restore.id}"][data-string="${restore.string ?? fields.string.value}"]`,
@@ -249,6 +304,7 @@ export function initializeTabEditor({ onStart, onStop }) {
     if (blocked()) return;
     try {
       action();
+      clearRange();
       // Önceden alınmış belgelerde de ölçü sayısı arayüz sınırında kalmalı.
       message();
       save();
@@ -296,8 +352,188 @@ export function initializeTabEditor({ onStart, onStop }) {
     }, !stayAtEnd);
   }
 
+  function openInline(beforeId = null) {
+    if (blocked()) return;
+    digitBuffer = "";
+    const id = selected ?? "new";
+    const string = Number(fields.string.value);
+    const cell = grid.querySelector(
+      `[data-event="${id}"][data-string="${string}"]`,
+    );
+    if (!cell) return;
+    const voice = selectedVoice();
+    const input = document.createElement("input");
+    input.type = "text";
+    input.inputMode = "numeric";
+    input.className = "inline-fret";
+    input.dataset.inlineFret = "true";
+    input.value = beforeId ? "" : String(voice?.fret ?? "");
+    input.placeholder = "0–24";
+    input.setAttribute(
+      "aria-label",
+      t(beforeId ? "Araya eklenecek perde" : "Perdeyi düzenle"),
+    );
+    inlineEditor = input;
+    const finish = (cancel = false, fromBlur = false) => {
+      if (inlineEditor !== input) return;
+      const raw = input.value.trim();
+      const valid = /^\d{1,2}$/.test(raw) && Number(raw) <= 24;
+      if (!cancel && raw && !valid && !fromBlur) {
+        input.setAttribute("aria-invalid", "true");
+        message("Perde 0–24 arasında bir tam sayı olmalı.");
+        return;
+      }
+      inlineEditor = null;
+      if (cancel || (!valid && raw) || (beforeId && !raw)) {
+        render({ id, string });
+        if (!cancel && raw) message("Perde 0–24 arasında bir tam sayı olmalı.");
+        return;
+      }
+      edit(() => {
+        const note = {
+          string,
+          fret: Number(raw),
+          techniques: voice?.techniques ?? [],
+        };
+        if (beforeId) {
+          note.techniques = [];
+          selected = session.insertBefore(
+            beforeId,
+            note,
+            Number(fields.duration.value),
+          );
+        } else if (!raw) {
+          if (id !== "new") session.removeVoice(id, string);
+        } else if (id === "new") {
+          selected = session.add(note, Number(fields.duration.value));
+        } else {
+          session.setVoice(id, note);
+        }
+        syncFields();
+      }, true);
+    };
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        finish(event.key === "Escape");
+      }
+    });
+    input.addEventListener("blur", () => {
+      if (input.isConnected) finish(false, true);
+    });
+    cell.parentElement.replaceChildren(input);
+    input.focus();
+    input.select();
+  }
+
+  function copySelection() {
+    if (blocked() || !region().ids.length) return;
+    clipboard = region().events;
+    render(null, true);
+    setText(
+      "#editorClipboardStatus",
+      "{count} adım kopyalandı. Yapıştır seçili adımdan sonra ekler.",
+      { count: clipboard.length },
+    );
+  }
+  function pasteSelection() {
+    if (!clipboard.length) return;
+    edit(() => {
+      selected = session.insertEvents(clipboard, selected).at(-1);
+      syncFields();
+    }, true);
+  }
+  find("editorEditFret").addEventListener("click", () => openInline());
+  find("editorInsertBefore").addEventListener("click", () =>
+    openInline(selected),
+  );
+  find("editorCopy").addEventListener("click", copySelection);
+  find("editorPaste").addEventListener("click", pasteSelection);
+
+  const cellPoint = (cell) => ({
+    id: cell.dataset.event,
+    string: Number(cell.dataset.string),
+  });
+  grid.addEventListener("focusin", (event) => {
+    if (blocked() || drag || inlineEditor) return;
+    const cell = event.target.closest("[data-event][data-string]");
+    if (!cell) return;
+    const point = cellPoint(cell);
+    const id = point.id === "new" ? null : point.id;
+    if (selected === id && Number(fields.string.value) === point.string) return;
+    clearRange();
+    selected = id;
+    fields.string.value = String(point.string);
+    syncFields();
+    render(null, true);
+  });
+  grid.addEventListener("pointerdown", (event) => {
+    if (blocked() || event.button !== 0 || event.pointerType === "touch")
+      return;
+    const cell = event.target.closest("[data-event][data-string]");
+    drag = null;
+    if (!cell || cell.dataset.event === "new") return;
+    const point = cellPoint(cell);
+    drag = {
+      anchor: event.shiftKey
+        ? (selectionAnchor ?? currentCell() ?? point)
+        : point,
+      focus: point,
+      moved: false,
+    };
+  });
+  grid.addEventListener("pointerover", (event) => {
+    if (!drag || event.buttons !== 1 || blocked()) return;
+    const cell = event.target.closest("[data-event][data-string]");
+    if (!cell || cell.dataset.event === "new") return;
+    const point = cellPoint(cell);
+    if (point.id === drag.focus.id && point.string === drag.focus.string)
+      return;
+    drag.focus = point;
+    drag.moved = true;
+    selectionAnchor = drag.anchor;
+    selectionFocus = point;
+    selected = point.id;
+    fields.string.value = String(point.string);
+    paintSelection();
+  });
+  document.addEventListener("pointerup", (event) => {
+    if (drag && !grid.contains(event.target)) {
+      drag = null;
+      syncFields();
+      render(null, true);
+    }
+  });
+  document.addEventListener("pointercancel", () => {
+    drag = null;
+  });
+  grid.addEventListener("dblclick", (event) => {
+    const cell = event.target.closest("[data-event][data-string]");
+    if (cell && !blocked()) openInline();
+  });
+
   grid.addEventListener("click", (event) => {
     if (blocked()) return;
+    if (event.target.closest("[data-inline-fret]")) return;
+    if (drag?.moved) {
+      drag = null;
+      syncFields();
+      render(null, true);
+      return;
+    }
+    drag = null;
+    const duplicate = event.target.closest("[data-duplicate-measure]");
+    if (duplicate && !duplicate.disabled) {
+      edit(() => {
+        selected =
+          session.duplicateMeasure(
+            Number(duplicate.dataset.duplicateMeasure),
+          )[0] ?? null;
+        syncFields();
+      }, true);
+      return;
+    }
     const remove = event.target.closest("[data-remove-measure]");
     if (remove && !remove.disabled) {
       const index = Number(remove.dataset.removeMeasure);
@@ -313,9 +549,11 @@ export function initializeTabEditor({ onStart, onStop }) {
     const cell = event.target.closest("[data-event]");
     if (!cell) return;
     digitBuffer = "";
+    const previous = selectionAnchor ?? currentCell();
     const string = cell.dataset.string;
     if (string) fields.string.value = string;
     if (cell.dataset.event === "new") {
+      clearRange();
       selected = null;
       syncFields();
       render({ id: "new", string: fields.string.value });
@@ -324,27 +562,30 @@ export function initializeTabEditor({ onStart, onStop }) {
     selected = cell.dataset.event;
     if (!string && selectedEvent().notes.length)
       fields.string.value = selectedEvent().notes[0].string;
-    // Tıklama sadece imleci taşır. Nota ancak perde yazıldığında oluşur.
+    if (event.shiftKey && previous) {
+      selectionAnchor = previous;
+      selectionFocus = currentCell();
+    } else {
+      clearRange();
+      if (!string) {
+        selectionAnchor = { id: selected, string: 1 };
+        selectionFocus = { id: selected, string: 6 };
+      }
+    }
     syncFields();
-    render({ id: selected, string: fields.string.value });
+    render({ id: selected, string: fields.string.value }, true);
   });
 
-  function enterFret(fret, stayAtEnd = false) {
+  function enterFret(fret) {
     fields.fret.value = fret;
-    if (!selectedEvent()) add(false, stayAtEnd);
+    if (!selectedEvent()) add();
     else edit(() => session.setVoice(selected, readVoice()), true);
   }
-  fretPad.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-fret]");
-    if (button && !button.disabled && !blocked()) {
-      digitBuffer = "";
-      enterFret(Number(button.dataset.fret), true);
-    }
-  });
 
   function moveStep(direction) {
     if (blocked()) return;
     digitBuffer = "";
+    clearRange();
     const events = session.document.events;
     const index = selected ? events.indexOf(selectedEvent()) : events.length;
     const end =
@@ -380,6 +621,7 @@ export function initializeTabEditor({ onStart, onStop }) {
     add(true, !selectedEvent()),
   );
   find("editorNew").addEventListener("click", () => {
+    clearRange();
     selected = null;
     digitBuffer = "";
     syncFields();
@@ -390,14 +632,15 @@ export function initializeTabEditor({ onStart, onStop }) {
   });
   find("editorDelete").addEventListener("click", () =>
     edit(() => {
-      session.removeEvent(selected);
+      session.removeEvents(region().ids);
       selected = null;
       syncFields();
     }),
   );
   find("editorRemoveVoice").addEventListener("click", () =>
     edit(() => {
-      session.removeVoice(selected, Number(fields.string.value));
+      const area = region();
+      session.removeVoices(area.ids, area.strings);
       syncFields();
     }),
   );
@@ -418,6 +661,7 @@ export function initializeTabEditor({ onStart, onStop }) {
   find("editorRedo").addEventListener("click", () => restore("redo"));
 
   fields.string.addEventListener("change", () => {
+    clearRange();
     syncFields();
     render();
   });
@@ -483,7 +727,23 @@ export function initializeTabEditor({ onStart, onStop }) {
       restore(event.shiftKey ? "redo" : "undo");
       return;
     }
+    if ((event.ctrlKey || event.metaKey) && cell) {
+      if (event.key.toLowerCase() === "c") {
+        event.preventDefault();
+        copySelection();
+      }
+      if (event.key.toLowerCase() === "v") {
+        event.preventDefault();
+        pasteSelection();
+      }
+      return;
+    }
     if (event.ctrlKey || event.metaKey || !cell) return;
+    if (event.key === "F2" || event.key === "Insert") {
+      event.preventDefault();
+      openInline(event.key === "Insert" ? selected : null);
+      return;
+    }
     if (/^[0-9]$/.test(event.key)) {
       event.preventDefault();
       const now = performance.now();
@@ -506,6 +766,7 @@ export function initializeTabEditor({ onStart, onStop }) {
     }
     if (["ArrowUp", "ArrowDown"].includes(event.key)) {
       event.preventDefault();
+      clearRange();
       fields.string.value = Math.max(
         1,
         Math.min(
@@ -574,6 +835,7 @@ export function initializeTabEditor({ onStart, onStop }) {
       });
       selected = null;
       storageProtected = false;
+      clearRange();
       syncFields();
       save();
       message();

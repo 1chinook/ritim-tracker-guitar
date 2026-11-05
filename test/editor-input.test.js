@@ -23,6 +23,10 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
       return this.children.filter((child) => child.tag === "option");
     }
     scrollIntoView() {}
+    select() {}
+    get parentElement() {
+      return this.parent;
+    }
     classList = { toggle() {}, contains: () => false };
     constructor(tag = "div") {
       this.tag = tag;
@@ -33,11 +37,12 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
         this.children.push(child);
       });
     }
-    replaceChildren() {
+    replaceChildren(...children) {
       this.children.forEach((child) => {
         child.isConnected = false;
       });
       this.children = [];
+      this.append(...children);
     }
     setAttribute(key, value) {
       this.attributes[key] = value;
@@ -64,14 +69,20 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
       return selector.split(", ").includes(this.tag);
     }
     closest(selector) {
-      return (selector === "[data-event]" &&
-        this.dataset.event !== undefined) ||
-        (selector === "[data-remove-measure]" &&
-          this.dataset.removeMeasure !== undefined) ||
-        (selector === ".tab-cell" && this.className.includes("tab-cell")) ||
-        (selector === "[data-fret]" && this.dataset.fret !== undefined)
-        ? this
-        : this.parent?.closest(selector);
+      const attributes = [
+        ...selector.matchAll(/\[data-([\w-]+)(?:="([^"]*)")?\]/g),
+      ];
+      const key = (name) =>
+        name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+      const matches =
+        attributes.length &&
+        attributes.every(
+          (match) =>
+            this.dataset[key(match[1])] !== undefined &&
+            (match[2] === undefined ||
+              String(this.dataset[key(match[1])]) === match[2]),
+        );
+      return matches ? this : this.parent?.closest(selector);
     }
     querySelectorAll(selector) {
       const matches = (node) =>
@@ -94,6 +105,7 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
       return this.listeners[name]?.({
         target: this,
         preventDefault() {},
+        stopPropagation() {},
         ...extra,
       });
     }
@@ -121,8 +133,12 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     "editorSelection",
     "editorNew",
     "editorNext",
+    "editorEditFret",
+    "editorInsertBefore",
+    "editorCopy",
+    "editorPaste",
+    "editorClipboardStatus",
     "editorRest",
-    "editorFrets",
     "editorDownload",
     "editorPlaybackStatus",
     "editorMeter",
@@ -271,11 +287,14 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
       "Geçersiz dosya çalışan taslağı bozmamalı",
     );
     elements.editorNew.click();
-    const fret = (value) =>
-      elements.editorFrets.fire("click", {
-        target: elements.editorFrets.children[value],
-      });
+    const fret = (value) => {
+      elements.editorEditFret.click();
+      const input = document.activeElement;
+      input.value = String(value);
+      input.fire("keydown", { key: "Enter" });
+    };
     fret(24);
+    elements.editorNew.click();
     fret(3);
     assert.deepEqual(
       notes()
@@ -309,6 +328,102 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     assert.equal(ticks(), beforeTicks - 3840);
     elements.editorUndo.click();
     assert.equal(saved.get("ritim-score-v1"), beforeBar);
+
+    const initial = saved.get("ritim-score-v1");
+    const originals = structuredClone(notes());
+    const choose = (id, string, extra = {}) => {
+      const target = elements.editorTable.querySelector(
+        `[data-event="${id}"][data-string="${string}"]`,
+      );
+      elements.editorTable.fire("click", { target, ...extra });
+      return target;
+    };
+    choose(originals[0].id, 6);
+    elements.editorTable.fire("dblclick", { target: document.activeElement });
+    let input = document.activeElement;
+    assert.equal(input.tag, "input");
+    input.value = "12";
+    input.fire("keydown", { key: "Enter" });
+    assert.equal(notes()[0].notes[0].fret, 12);
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
+
+    choose(originals[0].id, 6);
+    elements.tabEditor.fire("keydown", {
+      target: document.activeElement,
+      key: "c",
+      ctrlKey: true,
+    });
+    choose(originals[1].id, 6);
+    elements.tabEditor.fire("keydown", {
+      target: document.activeElement,
+      key: "v",
+      ctrlKey: true,
+    });
+    assert.equal(notes().length, originals.length + 1);
+    assert.equal(notes()[2].notes[0].fret, originals[0].notes[0].fret);
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
+
+    choose(originals[0].id, 6);
+    elements.editorEditFret.click();
+    input = document.activeElement;
+    input.value = "99";
+    input.fire("keydown", { key: "Enter" });
+    assert.equal(saved.get("ritim-score-v1"), initial);
+    input.fire("keydown", { key: "Escape" });
+    assert.equal(saved.get("ritim-score-v1"), initial);
+
+    choose(originals[1].id, 6);
+    elements.editorInsertBefore.click();
+    input = document.activeElement;
+    input.value = "9";
+    input.fire("keydown", { key: "Enter" });
+    assert.equal(notes().length, originals.length + 1);
+    assert.equal(notes()[1].notes[0].fret, 9);
+    assert.equal(notes()[2].id, originals[1].id);
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
+
+    choose(originals[0].id, 6);
+    choose(originals[1].id, 5, { shiftKey: true });
+    elements.editorCopy.click();
+    choose(originals[2].id, 6);
+    elements.editorPaste.click();
+    assert.equal(notes().length, originals.length + 2);
+    assert.deepEqual(notes()[3].notes, originals[0].notes);
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
+
+    const start = choose(originals[0].id, 6);
+    const end = elements.editorTable.querySelector(
+      `[data-event="${originals[2].id}"][data-string="5"]`,
+    );
+    elements.editorTable.fire("pointerdown", {
+      target: start,
+      button: 0,
+      pointerType: "mouse",
+    });
+    elements.editorTable.fire("pointerover", { target: end, buttons: 1 });
+    elements.editorTable.fire("click", { target: end });
+    elements.editorRemoveVoice.click();
+    assert.ok(
+      notes()
+        .slice(0, 3)
+        .every((event) => event.notes.length === 0),
+    );
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
+
+    const duplicate = elements.editorTable
+      .querySelectorAll("button")
+      .find((button) => button.dataset.duplicateMeasure === "0");
+    assert.ok(duplicate);
+    const beforeDuplicateTicks = ticks();
+    elements.editorTable.fire("click", { target: duplicate });
+    assert.equal(ticks(), beforeDuplicateTicks + 3840);
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
   } finally {
     for (const [name, value] of Object.entries(previous)) {
       if (value === undefined) delete globalThis[name];

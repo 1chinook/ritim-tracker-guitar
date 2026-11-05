@@ -223,11 +223,19 @@
                 Notayı sil
               </button>
             </div>
-            <div class="fret-picker">
-              <span>Perde seç</span>
-              <div id="editorFrets"></div>
-            </div>
           </div>
+          <div
+            class="editor-actions selection-actions"
+            aria-label="Seçim araçları"
+          >
+            <button class="ghost" id="editorEditFret">Perdeyi düzenle</button>
+            <button class="ghost" id="editorInsertBefore">
+              Önüne nota ekle
+            </button>
+            <button class="ghost" id="editorCopy">Kopyala</button>
+            <button class="ghost" id="editorPaste">Yapıştır</button>
+          </div>
+          <p id="editorClipboardStatus" class="help" role="status"></p>
           <div id="editorScroll" class="editor-scroll">
             <div
               id="editorTable"
@@ -237,8 +245,9 @@
             ></div>
           </div>
           <p class="editor-shortcuts">
-            Bir tele tıkla, perdeyi yaz veya üstten seç. Enter sonraki adıma
-            geçer, Delete seçili notayı siler.
+            Çift tıkla veya F2 ile perdeyi düzenle. Sürükleyerek ya da Shift ile
+            tıklayarak alan seç. Ctrl/⌘ C kopyalar, Ctrl/⌘ V seçili adımdan
+            sonra ekler. Delete seçili notaları siler.
           </p>
           <details class="editor-drawer">
             <summary>Dizi yapıştır</summary>

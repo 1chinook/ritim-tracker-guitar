@@ -5,6 +5,42 @@ import {
 } from "./score-document.js";
 import { maximumNotes } from "./tab-model.js";
 import { splitMeasures } from "./score-notation.js";
+import { compileScore } from "./score-timeline.js";
+
+// Araya ekleme ölçü sınırındaki uzun bir notayı iki parçaya bölebilir.
+// Kimlikler, eklenen adımlar ve sağdaki devam parçası için yeniden üretilir.
+function insertAtTick(score, tick, events) {
+  if (!events.length) return [];
+  const used = new Set(score.events.map((event) => event.id));
+  let suffix = 1;
+  const freshEvent = (event) => {
+    while (used.has(`note-${suffix}`)) suffix++;
+    const id = `note-${suffix++}`;
+    used.add(id);
+    return { ...structuredClone(event), id };
+  };
+  let position = 0;
+  let index = 0;
+  while (index < score.events.length && position < tick) {
+    const event = score.events[index];
+    const end = position + event.durationTicks;
+    if (tick < end) {
+      const continuation = freshEvent({
+        ...event,
+        durationTicks: end - tick,
+      });
+      event.durationTicks = tick - position;
+      score.events.splice(index + 1, 0, continuation);
+    }
+    position = end;
+    index++;
+  }
+  const inserted = events.map(freshEvent);
+  score.events.splice(index, 0, ...inserted);
+  if (score.events.length > maximumNotes)
+    throw new Error("En fazla 128 adım ekleyebilirsin.");
+  return inserted.map((event) => event.id);
+}
 
 // Bütün düzenlemeler tek doğrulama ve geçmiş katmanından geçer.
 export class ScoreSession {
@@ -103,6 +139,72 @@ export class ScoreSession {
       if (event)
         event.notes = event.notes.filter((note) => note.string !== string);
     });
+  }
+
+  insertEvents(events, afterId = null) {
+    const timeline = compileScore(this.document);
+    const after = timeline.events.find((event) => event.id === afterId);
+    if (afterId !== null && !after) throw new Error("Önce bir adım seç.");
+    const tick = after
+      ? after.startTicks + after.durationTicks
+      : timeline.totalTicks;
+    let ids;
+    this.change((score) => {
+      ids = insertAtTick(score, tick, events);
+    });
+    return ids;
+  }
+
+  insertBefore(id, voice, durationTicks = ticksPerBeat) {
+    const event = compileScore(this.document).events.find(
+      (event) => event.id === id,
+    );
+    if (!event) throw new Error("Önce bir adım seç.");
+    let ids;
+    this.change((score) => {
+      ids = insertAtTick(score, event.startTicks, [
+        {
+          durationTicks,
+          notes: voice ? [voice] : [],
+        },
+      ]);
+    });
+    return ids[0];
+  }
+
+  removeVoices(ids, strings) {
+    this.change((score) => {
+      for (const event of score.events)
+        if (ids.includes(event.id))
+          event.notes = event.notes.filter(
+            (note) => !strings.includes(note.string),
+          );
+    });
+  }
+
+  removeEvents(ids) {
+    this.change((score) => {
+      score.events = score.events.filter((event) => !ids.includes(event.id));
+    });
+  }
+
+  duplicateMeasure(index) {
+    const measure = splitMeasures(this.document)[index];
+    if (!measure?.segments.length) return [];
+    const timeline = compileScore(this.document);
+    const tick = Math.min(
+      (index + 1) * timeline.measureTicks,
+      timeline.totalTicks,
+    );
+    const events = measure.segments.map(({ durationTicks, eventIndex }) => ({
+      durationTicks,
+      notes: this.document.events[eventIndex].notes,
+    }));
+    let ids;
+    this.change((score) => {
+      ids = insertAtTick(score, tick, events);
+    });
+    return ids;
   }
 
   removeEvent(id) {

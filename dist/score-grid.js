@@ -69,6 +69,19 @@ export function renderScoreGrid(container, score, state) {
         measure.segments.length +
         Number(isLastSystem && measure === system.at(-1));
       if (measure.segments.length) {
+        const duplicate = document.createElement("button");
+        const copyLabel = t("{number}. ölçüyü çoğalt", {
+          number: measure.index + 1,
+        });
+        duplicate.type = "button";
+        duplicate.className = "duplicate-measure";
+        duplicate.dataset.duplicateMeasure = String(measure.index);
+        duplicate.textContent = "⧉";
+        duplicate.title = copyLabel;
+        duplicate.setAttribute("aria-label", copyLabel);
+        duplicate.disabled =
+          state.disabled || score.events.length >= maximumNotes;
+        title.append(duplicate);
         const remove = document.createElement("button");
         const label = t("{number}. ölçüyü sil", { number: measure.index + 1 });
         remove.type = "button";
@@ -138,6 +151,7 @@ export function renderScoreGrid(container, score, state) {
           state.selected === segment.id && String(row + 1) === state.string,
         );
         button.className += " score-cell";
+        button.draggable = false;
         if (note) {
           const mark = document.createElement("span");
           mark.className = "score-mark";

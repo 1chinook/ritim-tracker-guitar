@@ -8,8 +8,20 @@ export const english = {
   Tel: "String",
   "Hızlı yaz": "Quick entry",
   "Diziyi ekle": "Insert sequence",
+  "Perdeyi düzenle": "Edit fret",
+  "Araya eklenecek perde": "Fret to insert before this step",
+  "Önüne nota ekle": "Insert note before",
+  Kopyala: "Copy",
+  Yapıştır: "Paste",
+  "Seçim araçları": "Selection tools",
+  "{number}. ölçüyü çoğalt": "Duplicate measure {number}",
+  "{steps} adım · {strings} tel seçili":
+    "{steps} steps · {strings} strings selected",
+  "{count} adım kopyalandı. Yapıştır seçili adımdan sonra ekler.":
+    "{count} steps copied. Paste inserts after the selected step.",
+  "Çift tıkla veya F2 ile perdeyi düzenle. Sürükleyerek ya da Shift ile tıklayarak alan seç. Ctrl/⌘ C kopyalar, Ctrl/⌘ V seçili adımdan sonra ekler. Delete seçili notaları siler.":
+    "Double-click or use F2 to edit a fret. Drag or Shift-click to select a region. Ctrl/⌘ C copies, Ctrl/⌘ V inserts after the selected step. Delete removes selected notes.",
   "Dizi yapıştır": "Paste sequence",
-  "Perde seç": "Choose a fret",
   Teknikler: "Techniques",
   "Ölçü ve adım araçları": "Measure and step tools",
   "{number}. ölçüyü sil": "Delete measure {number}",
@@ -18,8 +30,8 @@ export const english = {
   "Sonraki →": "Next →",
   "Adımı kaldır": "Remove step",
   "{step}. adım · {string}. tel": "Step {step} · String {string}",
-  "Yeni nota · {string}. tel · Perde tuşları sona ekler.":
-    "New note · String {string} · Fret buttons append notes.",
+  "Yeni nota · {string}. tel · Çift tıklayarak perde yaz.":
+    "New note · String {string} · Double-click to enter a fret.",
   "Bir tele tıkla, perdeyi yaz veya üstten seç. Enter sonraki adıma geçer, Delete seçili notayı siler.":
     "Click a string, then type a fret or choose it above. Enter advances, Delete removes the selected note.",
   "Perdeleri boşlukla ayır. Sus için - yaz. Dizi, seçili adımdan sonra eklenir; seçim yoksa sona eklenir.":
