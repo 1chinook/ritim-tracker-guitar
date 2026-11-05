@@ -16,6 +16,28 @@ import {
 
 const voice = (string, fret, techniques = []) => ({ string, fret, techniques });
 
+test("Ölçüyü silmek sınırı aşan notaların yalnızca ölçüdeki süresini kaldırır", () => {
+  const session = new ScoreSession();
+  const first = session.add(voice(6, 0), 2880);
+  const crossing = session.add(voice(5, 2, [{ type: "vibrato" }]), 1920);
+  session.add(voice(4, 7), 960);
+  const rest = session.add(null, 2880);
+  const before = session.document;
+
+  session.removeMeasure(1);
+  assert.deepEqual(
+    session.document.events.map(({ id, durationTicks }) => [id, durationTicks]),
+    [
+      [first, 2880],
+      [crossing, 960],
+      [rest, 960],
+    ],
+  );
+  assert.deepEqual(session.document.events[1].notes, before.events[1].notes);
+  session.undo();
+  assert.deepEqual(session.document, before);
+});
+
 test("Aynı adıma eklenen teller korunur ve geri al/yinele teknikleri kaybetmez", () => {
   const session = new ScoreSession();
   const id = session.add(voice(6, 0));

@@ -11,6 +11,7 @@ import { renderScoreGrid } from "./score-grid.js";
 import { compileScore } from "./score-timeline.js";
 import { setText } from "./preferences.js";
 import { parseRiff } from "./riff-input.js";
+import { maximumNotes } from "./tab-model.js";
 
 const example = migrateLegacyDraft({
   version: 1,
@@ -28,6 +29,14 @@ export function initializeTabEditor({ onStart, onStop }) {
   const find = (id) => document.querySelector(`#${id}`);
   const section = find("tabEditor");
   const grid = find("editorTable");
+  const fretPad = find("editorFrets");
+  for (let fret = 0; fret <= 24; fret++) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.fret = String(fret);
+    button.textContent = String(fret);
+    fretPad.append(button);
+  }
   const fields = {
     string: find("editorString"),
     fret: find("editorFret"),
@@ -129,7 +138,6 @@ export function initializeTabEditor({ onStart, onStop }) {
   }
 
   function readVoice() {
-    if (fields.string.value === "rest") return null;
     if (!fields.fret.checkValidity())
       throw new Error("Perde 0–24 arasında bir tam sayı olmalı.");
     const techniques = [];
@@ -175,24 +183,35 @@ export function initializeTabEditor({ onStart, onStop }) {
     section.querySelectorAll("[data-editor-control]").forEach((control) => {
       control.disabled = blocked();
     });
-    fields.fret.disabled = blocked() || fields.string.value === "rest";
-    fields.bend.disabled =
-      blocked() || fields.pitch.value !== "bend" || fields.dead.checked;
+    const full = session.document.events.length >= maximumNotes;
+    const event = selectedEvent();
+    for (const button of fretPad.children)
+      button.disabled = blocked() || (full && !event);
+    find("editorNew").disabled = blocked() || full;
+    find("editorRest").disabled = blocked() || full;
+    find("editorNext").disabled =
+      blocked() || !event || (full && event === session.document.events.at(-1));
+    setText(
+      "#editorDurationLabel",
+      event ? "Bu adımın süresi" : "Yeni notanın süresi",
+    );
+    const hasVoice = Boolean(selectedVoice());
+    const techniqueBlocked = blocked() || !hasVoice || fields.dead.checked;
+    fields.dead.disabled = blocked() || !hasVoice;
+    fields.bend.disabled = techniqueBlocked || fields.pitch.value !== "bend";
     fields.target.disabled =
-      blocked() ||
-      !["slide", "hammerOn", "pullOff"].includes(fields.pitch.value) ||
-      fields.dead.checked;
-    fields.depth.disabled =
-      blocked() || !fields.vibrato.checked || fields.dead.checked;
+      techniqueBlocked ||
+      !["slide", "hammerOn", "pullOff"].includes(fields.pitch.value);
+    fields.depth.disabled = techniqueBlocked || !fields.vibrato.checked;
     fields.rate.disabled = fields.depth.disabled;
     for (const control of [fields.pitch, fields.vibrato, fields.mute])
-      control.disabled = blocked() || fields.dead.checked;
+      control.disabled = techniqueBlocked;
     find("editorPlay").disabled = blocked() || !session.document.events.length;
     find("editorStop").disabled = !player.playing;
     find("editorUndo").disabled = blocked() || !session.past.length;
     find("editorRedo").disabled = blocked() || !session.future.length;
     find("editorDelete").disabled = blocked() || !selectedEvent();
-    find("editorRemoveVoice").disabled = blocked() || !selectedVoice();
+    find("editorRemoveVoice").disabled = blocked() || !hasVoice;
     find("editorDuplicate").disabled =
       blocked() || !selectedEvent() || session.document.events.length >= 128;
     fields.bpm.value = session.document.bpm;
@@ -209,13 +228,12 @@ export function initializeTabEditor({ onStart, onStop }) {
     });
     setText(
       "#editorSelection",
-      selectedEvent()
-        ? "Seçili adım: {step} · Değişiklikler otomatik uygulanır."
-        : "Yeni nota · Bir perde yaz veya hızlı giriş alanını kullan.",
+      event
+        ? "{step}. adım · {string}. tel"
+        : "Yeni nota · {string}. tel · Perde tuşları sona ekler.",
       {
-        step:
-          session.document.events.findIndex((event) => event.id === selected) +
-          1,
+        step: session.document.events.indexOf(event) + 1,
+        string: fields.string.value,
       },
     );
     if (restore?.id) {
@@ -268,18 +286,32 @@ export function initializeTabEditor({ onStart, onStop }) {
     },
   });
 
-  function add(rest = false) {
+  function add(rest = false, stayAtEnd = false) {
     edit(() => {
       const voice = rest ? null : readVoice();
-      selected = session.add(voice, Number(fields.duration.value));
-      if (rest) fields.string.value = "rest";
+      const id = session.add(voice, Number(fields.duration.value));
+      selected =
+        stayAtEnd && session.document.events.length < maximumNotes ? null : id;
       syncFields();
-    }, true);
+    }, !stayAtEnd);
   }
 
   grid.addEventListener("click", (event) => {
+    if (blocked()) return;
+    const remove = event.target.closest("[data-remove-measure]");
+    if (remove && !remove.disabled) {
+      const index = Number(remove.dataset.removeMeasure);
+      edit(() => {
+        session.removeMeasure(index);
+        const measures = splitMeasures(session.document);
+        const nextMeasure = measures[index] ?? measures.at(-1);
+        selected = nextMeasure.segments[0]?.id ?? null;
+        syncFields();
+      }, true);
+      return;
+    }
     const cell = event.target.closest("[data-event]");
-    if (!cell || blocked()) return;
+    if (!cell) return;
     digitBuffer = "";
     const string = cell.dataset.string;
     if (string) fields.string.value = string;
@@ -290,27 +322,39 @@ export function initializeTabEditor({ onStart, onStop }) {
       return;
     }
     selected = cell.dataset.event;
-    if (!string)
-      fields.string.value = selectedEvent().notes[0]?.string ?? "rest";
+    if (!string && selectedEvent().notes.length)
+      fields.string.value = selectedEvent().notes[0].string;
     // Tıklama sadece imleci taşır. Nota ancak perde yazıldığında oluşur.
     syncFields();
     render({ id: selected, string: fields.string.value });
   });
 
-  function enterFret(fret) {
+  function enterFret(fret, stayAtEnd = false) {
     fields.fret.value = fret;
-    if (fields.string.value === "rest") fields.string.value = "6";
-    if (!selectedEvent()) add();
+    if (!selectedEvent()) add(false, stayAtEnd);
     else edit(() => session.setVoice(selected, readVoice()), true);
   }
-  find("editorFrets").addEventListener("click", (event) => {
+  fretPad.addEventListener("click", (event) => {
     const button = event.target.closest("[data-fret]");
-    if (button) {
+    if (button && !button.disabled && !blocked()) {
       digitBuffer = "";
-      enterFret(Number(button.dataset.fret));
+      enterFret(Number(button.dataset.fret), true);
     }
   });
-  find("editorAdd").addEventListener("click", () => add());
+
+  function moveStep(direction) {
+    if (blocked()) return;
+    digitBuffer = "";
+    const events = session.document.events;
+    const index = selected ? events.indexOf(selectedEvent()) : events.length;
+    const end =
+      events.length < maximumNotes ? events.length : events.length - 1;
+    const next = Math.max(0, Math.min(end, index + direction));
+    selected = events[next]?.id ?? null;
+    syncFields();
+    render({ id: selected ?? "new", string: fields.string.value });
+  }
+  find("editorNext").addEventListener("click", () => moveStep(1));
   function insertRiff() {
     edit(() => {
       const input = find("editorRiff");
@@ -332,14 +376,16 @@ export function initializeTabEditor({ onStart, onStop }) {
       insertRiff();
     }
   });
-  find("editorRest").addEventListener("click", () => add(true));
+  find("editorRest").addEventListener("click", () =>
+    add(true, !selectedEvent()),
+  );
   find("editorNew").addEventListener("click", () => {
     selected = null;
     digitBuffer = "";
     syncFields();
     render({
       id: "new",
-      string: fields.string.value === "rest" ? "6" : fields.string.value,
+      string: fields.string.value,
     });
   });
   find("editorDelete").addEventListener("click", () =>
@@ -396,8 +442,7 @@ export function initializeTabEditor({ onStart, onStop }) {
     fields.dead,
   ]) {
     input.addEventListener("change", () => {
-      if (selectedEvent() && fields.string.value !== "rest")
-        edit(() => session.setVoice(selected, readVoice()));
+      if (selectedVoice()) edit(() => session.setVoice(selected, readVoice()));
       else render();
     });
   }
@@ -420,7 +465,9 @@ export function initializeTabEditor({ onStart, onStop }) {
   );
 
   section.addEventListener("keydown", (event) => {
-    if (event.key === " " && grid.contains(event.target)) {
+    const cell =
+      grid.contains(event.target) && event.target.closest("[data-event]");
+    if (event.key === " " && cell) {
       event.preventDefault();
       find(player.playing ? "editorStop" : "editorPlay").click();
       return;
@@ -436,7 +483,7 @@ export function initializeTabEditor({ onStart, onStop }) {
       restore(event.shiftKey ? "redo" : "undo");
       return;
     }
-    if (event.ctrlKey || event.metaKey || !grid.contains(event.target)) return;
+    if (event.ctrlKey || event.metaKey || !cell) return;
     if (/^[0-9]$/.test(event.key)) {
       event.preventDefault();
       const now = performance.now();
@@ -455,17 +502,7 @@ export function initializeTabEditor({ onStart, onStop }) {
     }
     if (["ArrowLeft", "ArrowRight", "Enter"].includes(event.key)) {
       event.preventDefault();
-      const events = session.document.events;
-      const index = selected
-        ? events.findIndex((item) => item.id === selected)
-        : events.length;
-      const next = index + (event.key === "ArrowLeft" ? -1 : 1);
-      selected = events[Math.max(0, next)]?.id ?? null;
-      syncFields();
-      render({
-        id: selected ?? "new",
-        string: fields.string.value === "rest" ? "6" : fields.string.value,
-      });
+      moveStep(event.key === "ArrowLeft" ? -1 : 1);
     }
     if (["ArrowUp", "ArrowDown"].includes(event.key)) {
       event.preventDefault();

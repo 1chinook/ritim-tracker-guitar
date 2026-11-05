@@ -88,115 +88,14 @@
               >
             </div>
           </div>
-          <div class="editor-fields riff-entry">
-            <label
-              ><span>Tel</span
-              ><select id="editorString" data-editor-control>
-                <option value="6">6 · E2</option>
-                <option value="5">5 · A2</option>
-                <option value="4">4 · D3</option>
-                <option value="3">3 · G3</option>
-                <option value="2">2 · B3</option>
-                <option value="1">1 · E4</option>
-                <option value="rest">Sus</option>
-              </select></label
-            >
-            <label
-              ><span>Nota süresi</span
-              ><select id="editorDuration" data-editor-control>
-                <option value="120">Otuzikilik · 1/32</option>
-                <option value="240">Onaltılık · 1/16</option>
-                <option value="320">Sekizlik üçleme</option>
-                <option value="480">Sekizlik · 1/8</option>
-                <option value="640">Dörtlük üçleme</option>
-                <option value="720">Noktalı sekizlik</option>
-                <option value="960" selected>Dörtlük · 1/4</option>
-                <option value="1440">Noktalı dörtlük</option>
-                <option value="1920">İkilik · 1/2</option>
-                <option value="3840">Birlik · 1/1</option>
-              </select></label
-            >
-            <label class="riff-input"
-              ><span>Hızlı yaz</span
-              ><input
-                id="editorRiff"
-                type="text"
-                placeholder="0 3 5 7 - 5 3"
-                aria-describedby="riffHelp"
-                autocomplete="off"
-                spellcheck="false"
-                data-editor-control
-            /></label>
-            <button class="primary" id="editorInsertRiff" data-editor-control>
-              Diziyi ekle
-            </button>
-          </div>
-          <p id="riffHelp" class="help">
-            Perdeleri boşlukla ayır. Sus için - yaz. Dizi, seçili adımdan sonra
-            eklenir; seçim yoksa sona eklenir.
-          </p>
-          <div id="editorScroll" class="editor-scroll">
-            <div
-              id="editorTable"
-              class="score-measures"
-              role="group"
-              aria-label="Düzenlenebilir gitar tabı"
-            ></div>
-          </div>
-          <p class="editor-shortcuts">
-            Hücre seç → perdeyi yaz → Enter ile ilerle. ↑ ↓ tel değiştirir.
-            Boşluk çalar / durdurur.
-          </p>
-          <div class="selection-toolbar">
-            <p id="editorSelection" class="selection-hint" role="status"></p>
-            <div class="editor-fields">
-              <label
-                ><span>Perde</span
-                ><input
-                  id="editorFret"
-                  type="number"
-                  value="0"
-                  min="0"
-                  max="24"
-                  step="1"
-                  required
-                  data-editor-control
-              /></label>
-              <button class="ghost" id="editorAdd" data-editor-control>
-                Sona nota ekle
-              </button>
-              <button class="ghost" id="editorNew" data-editor-control>
-                Sona git
-              </button>
-              <button class="ghost" id="editorRest" data-editor-control>
-                Sus ekle
-              </button>
-              <button class="ghost" id="editorRemoveVoice">Notayı sil</button>
-            </div>
-          </div>
-          <p id="editorPlaybackStatus" class="help" role="status">
-            Oynatma durdu
-          </p>
-          <p id="editorMessage" class="message hidden" role="alert"></p>
-          <details class="editor-drawer">
-            <summary>Nota teknikleri ve diğer araçlar</summary>
-            <p class="help">
-              Önce tabdan bir nota seç. Teknikler yalnızca seçili telin notasına
-              uygulanır.
-            </p>
-            <fieldset class="technique-panel">
-              <legend>Ölçü ve seçili notanın teknikleri</legend>
+          <details class="technique-menu">
+            <summary>Teknikler</summary>
+            <div class="technique-panel">
+              <p class="help">
+                Önce tabdan bir nota seç. Teknikler yalnızca seçili telin
+                notasına uygulanır.
+              </p>
               <div class="editor-fields">
-                <label
-                  ><span>Ölçü</span
-                  ><select id="editorMeter" data-editor-control>
-                    <option value="4/4">4/4</option>
-                    <option value="3/4">3/4</option>
-                    <option value="6/8">6/8</option>
-                    <option value="2/4">2/4</option>
-                    <option value="5/4">5/4</option>
-                  </select></label
-                >
                 <label
                   ><span>Perde geçişi</span
                   ><select id="editorPitchTechnique" data-editor-control>
@@ -282,51 +181,127 @@
                   /></label>
                 </div>
               </details>
-              <p class="help">
-                Slide, hammer-on ve pull-off hedefi aynı notanın süresi içinde
-                duyulur. Hammer-on hedefi daha yüksek, pull-off hedefi daha
-                düşük perde olmalı.
-              </p>
-            </fieldset>
-            <div class="fret-picker">
-              <span>Hızlı perde seçimi</span>
-              <div id="editorFrets">
-                <button type="button" data-fret="0" data-editor-control>
-                  0</button
-                ><button type="button" data-fret="1" data-editor-control>
-                  1</button
-                ><button type="button" data-fret="2" data-editor-control>
-                  2</button
-                ><button type="button" data-fret="3" data-editor-control>
-                  3</button
-                ><button type="button" data-fret="4" data-editor-control>
-                  4</button
-                ><button type="button" data-fret="5" data-editor-control>
-                  5</button
-                ><button type="button" data-fret="6" data-editor-control>
-                  6</button
-                ><button type="button" data-fret="7" data-editor-control>
-                  7</button
-                ><button type="button" data-fret="8" data-editor-control>
-                  8</button
-                ><button type="button" data-fret="9" data-editor-control>
-                  9</button
-                ><button type="button" data-fret="10" data-editor-control>
-                  10</button
-                ><button type="button" data-fret="11" data-editor-control>
-                  11</button
-                ><button type="button" data-fret="12" data-editor-control>
-                  12
-                </button>
-              </div>
-              <small>13–24 için perde alanını veya klavyeyi kullan.</small>
             </div>
-
+          </details>
+          <div class="selection-toolbar">
+            <p id="editorSelection" class="selection-hint" role="status"></p>
+            <div class="editor-fields note-settings">
+              <label
+                ><span>Tel</span
+                ><select id="editorString" data-editor-control>
+                  <option value="6">6 · E2</option>
+                  <option value="5">5 · A2</option>
+                  <option value="4">4 · D3</option>
+                  <option value="3">3 · G3</option>
+                  <option value="2">2 · B3</option>
+                  <option value="1">1 · E4</option>
+                </select></label
+              >
+              <label
+                ><span id="editorDurationLabel">Yeni notanın süresi</span
+                ><select id="editorDuration" data-editor-control>
+                  <option value="120">Otuzikilik · 1/32</option>
+                  <option value="240">Onaltılık · 1/16</option>
+                  <option value="320">Sekizlik üçleme</option>
+                  <option value="480">Sekizlik · 1/8</option>
+                  <option value="640">Dörtlük üçleme</option>
+                  <option value="720">Noktalı sekizlik</option>
+                  <option value="960" selected>Dörtlük · 1/4</option>
+                  <option value="1440">Noktalı dörtlük</option>
+                  <option value="1920">İkilik · 1/2</option>
+                  <option value="3840">Birlik · 1/1</option>
+                </select></label
+              >
+              <button class="ghost" id="editorNew" data-editor-control>
+                Yeni nota +
+              </button>
+              <button class="ghost" id="editorNext">Sonraki →</button>
+              <button class="ghost" id="editorRest" data-editor-control>
+                Sus ekle
+              </button>
+              <button class="ghost note-delete" id="editorRemoveVoice">
+                Notayı sil
+              </button>
+            </div>
+            <div class="fret-picker">
+              <span>Perde seç</span>
+              <div id="editorFrets"></div>
+            </div>
+          </div>
+          <div id="editorScroll" class="editor-scroll">
+            <div
+              id="editorTable"
+              class="score-measures"
+              role="group"
+              aria-label="Düzenlenebilir gitar tabı"
+            ></div>
+          </div>
+          <p class="editor-shortcuts">
+            Bir tele tıkla, perdeyi yaz veya üstten seç. Enter sonraki adıma
+            geçer, Delete seçili notayı siler.
+          </p>
+          <details class="editor-drawer">
+            <summary>Dizi yapıştır</summary>
+            <div class="editor-fields riff-entry">
+              <label class="riff-input"
+                ><span>Hızlı yaz</span
+                ><input
+                  id="editorRiff"
+                  type="text"
+                  placeholder="0 3 5 7 - 5 3"
+                  aria-describedby="riffHelp"
+                  autocomplete="off"
+                  spellcheck="false"
+                  data-editor-control
+              /></label>
+              <button class="primary" id="editorInsertRiff" data-editor-control>
+                Diziyi ekle
+              </button>
+            </div>
+            <p id="riffHelp" class="help">
+              Perdeleri boşlukla ayır. Sus için - yaz. Dizi, seçili adımdan
+              sonra eklenir; seçim yoksa sona eklenir.
+            </p>
+          </details>
+          <p id="editorPlaybackStatus" class="help" role="status">
+            Oynatma durdu
+          </p>
+          <p id="editorMessage" class="message hidden" role="alert"></p>
+          <details class="editor-drawer">
+            <summary>Ölçü ve adım araçları</summary>
+            <fieldset class="technique-panel">
+              <legend>Ölçü ve adım araçları</legend>
+              <div class="editor-fields">
+                <label>
+                  <span>Perde</span>
+                  <input
+                    id="editorFret"
+                    type="number"
+                    value="0"
+                    min="0"
+                    max="24"
+                    step="1"
+                    required
+                    data-editor-control
+                  />
+                </label>
+                <label
+                  ><span>Ölçü</span
+                  ><select id="editorMeter" data-editor-control>
+                    <option value="4/4">4/4</option>
+                    <option value="3/4">3/4</option>
+                    <option value="6/8">6/8</option>
+                    <option value="2/4">2/4</option>
+                    <option value="5/4">5/4</option>
+                  </select></label
+                >
+              </div>
+            </fieldset>
             <div class="editor-actions">
               <button class="ghost" id="editorDuplicate">
                 Seçili adımı çoğalt
               </button>
-              <button class="ghost" id="editorDelete">Seçili adımı sil</button>
+              <button class="ghost" id="editorDelete">Adımı kaldır</button>
             </div>
             <p class="help">
               Delete notayı, Shift+Delete adımı siler. Ctrl/⌘ Z geri alır.

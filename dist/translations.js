@@ -8,6 +8,20 @@ export const english = {
   Tel: "String",
   "Hızlı yaz": "Quick entry",
   "Diziyi ekle": "Insert sequence",
+  "Dizi yapıştır": "Paste sequence",
+  "Perde seç": "Choose a fret",
+  Teknikler: "Techniques",
+  "Ölçü ve adım araçları": "Measure and step tools",
+  "{number}. ölçüyü sil": "Delete measure {number}",
+  "Bu adımın süresi": "Selected step duration",
+  "Yeni notanın süresi": "New note duration",
+  "Sonraki →": "Next →",
+  "Adımı kaldır": "Remove step",
+  "{step}. adım · {string}. tel": "Step {step} · String {string}",
+  "Yeni nota · {string}. tel · Perde tuşları sona ekler.":
+    "New note · String {string} · Fret buttons append notes.",
+  "Bir tele tıkla, perdeyi yaz veya üstten seç. Enter sonraki adıma geçer, Delete seçili notayı siler.":
+    "Click a string, then type a fret or choose it above. Enter advances, Delete removes the selected note.",
   "Perdeleri boşlukla ayır. Sus için - yaz. Dizi, seçili adımdan sonra eklenir; seçim yoksa sona eklenir.":
     "Separate frets with spaces. Use - for a rest. The sequence is inserted after the selected step, or appended when nothing is selected.",
   "Hücre seç → perdeyi yaz → Enter ile ilerle. ↑ ↓ tel değiştirir. Boşluk çalar / durdurur.":

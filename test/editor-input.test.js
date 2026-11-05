@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { initializeTabEditor } from "../dist/tab-editor.js";
 
 test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı günceller", async () => {
@@ -65,6 +66,8 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     closest(selector) {
       return (selector === "[data-event]" &&
         this.dataset.event !== undefined) ||
+        (selector === "[data-remove-measure]" &&
+          this.dataset.removeMeasure !== undefined) ||
         (selector === ".tab-cell" && this.className.includes("tab-cell")) ||
         (selector === "[data-fret]" && this.dataset.fret !== undefined)
         ? this
@@ -105,6 +108,7 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     "editorString",
     "editorFret",
     "editorDuration",
+    "editorDurationLabel",
     "editorMessage",
     "editorSaveStatus",
     "editorSummary",
@@ -115,8 +119,8 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     "editorRedo",
     "editorDuplicate",
     "editorSelection",
-    "editorAdd",
     "editorNew",
+    "editorNext",
     "editorRest",
     "editorFrets",
     "editorDownload",
@@ -137,6 +141,12 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     "editorInsertRiff",
     "editorTone",
   ];
+  const page = readFileSync(
+    new URL("../dist/editor.html", import.meta.url),
+    "utf8",
+  );
+  for (const id of ids)
+    assert.ok(page.includes(`id="${id}"`), `Editör sayfasında ${id} eksik`);
   const elements = Object.fromEntries(ids.map((id) => [id, new Element()]));
   Object.assign(elements.editorBpm, { value: "90", tag: "input" });
   Object.assign(elements.editorString, { value: "6", tag: "select" });
@@ -169,10 +179,11 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
       false,
       "Hücre seçmek taslağı değiştirmemeli",
     );
-    const key = (value) =>
+    const key = (value, shiftKey = false) =>
       elements.tabEditor.fire("keydown", {
         target: document.activeElement,
         key: value,
+        shiftKey,
       });
     key("1");
     assert.equal(notes().length, 6);
@@ -259,6 +270,45 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
       beforeImport,
       "Geçersiz dosya çalışan taslağı bozmamalı",
     );
+    elements.editorNew.click();
+    const fret = (value) =>
+      elements.editorFrets.fire("click", {
+        target: elements.editorFrets.children[value],
+      });
+    fret(24);
+    fret(3);
+    assert.deepEqual(
+      notes()
+        .slice(-2)
+        .map((step) => step.notes[0].fret),
+      [24, 3],
+    );
+    const last = notes().at(-1);
+    const cell = elements.editorTable.querySelector(
+      `[data-event="${last.id}"][data-string="6"]`,
+    );
+    elements.editorTable.fire("click", { target: cell });
+    fret(7);
+    assert.equal(notes().at(-1).notes[0].fret, 7);
+    key("Delete");
+    assert.deepEqual(notes().at(-1), { ...last, notes: [] });
+    key("Delete", true);
+    assert.equal(
+      notes().some((step) => step.id === last.id),
+      false,
+    );
+    const beforeBar = saved.get("ritim-score-v1");
+    const ticks = () =>
+      notes().reduce((total, step) => total + step.durationTicks, 0);
+    const beforeTicks = ticks();
+    const removeBar = elements.editorTable
+      .querySelectorAll("button")
+      .find((button) => button.dataset.removeMeasure === "0");
+    assert.ok(removeBar);
+    elements.editorTable.fire("click", { target: removeBar });
+    assert.equal(ticks(), beforeTicks - 3840);
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), beforeBar);
   } finally {
     for (const [name, value] of Object.entries(previous)) {
       if (value === undefined) delete globalThis[name];

@@ -4,6 +4,7 @@ import {
   ticksPerBeat,
 } from "./score-document.js";
 import { maximumNotes } from "./tab-model.js";
+import { splitMeasures } from "./score-notation.js";
 
 // Bütün düzenlemeler tek doğrulama ve geçmiş katmanından geçer.
 export class ScoreSession {
@@ -107,6 +108,20 @@ export class ScoreSession {
   removeEvent(id) {
     this.change((score) => {
       score.events = score.events.filter((event) => event.id !== id);
+    });
+  }
+
+  removeMeasure(index) {
+    const measure = splitMeasures(this.document)[index];
+    if (!measure?.segments.length) return;
+
+    const removedTicks = new Map(
+      measure.segments.map(({ id, durationTicks }) => [id, durationTicks]),
+    );
+    this.change((score) => {
+      for (const event of score.events)
+        event.durationTicks -= removedTicks.get(event.id) ?? 0;
+      score.events = score.events.filter((event) => event.durationTicks > 0);
     });
   }
 
