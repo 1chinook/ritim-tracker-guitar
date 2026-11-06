@@ -11,6 +11,7 @@ import { renderScoreGrid } from "./score-grid.js";
 import { compileScore } from "./score-timeline.js";
 import { setText, t } from "./preferences.js";
 import { parseRiff } from "./riff-input.js";
+import { initializeTechniqueControls } from "./technique-controls.js";
 import { maximumNotes } from "./tab-model.js";
 import { selectionBounds, selectedRegion } from "./score-selection.js";
 
@@ -45,6 +46,26 @@ export function initializeTabEditor({ onStart, onStop }) {
     mute: find("editorPalmMute"),
     dead: find("editorDeadNote"),
   };
+  const extraTechniques = initializeTechniqueControls({
+    find,
+    bendAmount: () => Number(fields.bend.value),
+    onChange: () => {
+      if (selectedVoice())
+        edit(() => {
+          session.setVoice(selected, readVoice());
+          syncFields();
+        });
+    },
+    onLink: (type) => {
+      const area = region();
+      if (area.ids.length !== 2 || area.strings.length !== 1) return;
+      edit(() => {
+        session.linkNotes(area.ids[0], area.ids[1], area.strings[0], type);
+        selected = area.ids[0];
+        syncFields();
+      }, true);
+    },
+  });
   let session = new ScoreSession(example);
   let selected = null;
   let active = null;
@@ -175,6 +196,7 @@ export function initializeTabEditor({ onStart, onStop }) {
     fields.rate.value = vibrato?.rateHz ?? 5;
     fields.mute.checked = effects.some((effect) => effect.type === "palmMute");
     fields.dead.checked = effects.some((effect) => effect.type === "deadNote");
+    extraTechniques.sync(note);
   }
 
   function readVoice() {
@@ -184,7 +206,11 @@ export function initializeTabEditor({ onStart, onStop }) {
     if (fields.dead.checked) techniques.push({ type: "deadNote" });
     else {
       if (fields.pitch.value === "bend")
-        techniques.push({ type: "bend", semitones: Number(fields.bend.value) });
+        techniques.push({
+          type: "bend",
+          semitones: Number(fields.bend.value),
+          curve: extraTechniques.curve(),
+        });
       if (["slide", "hammerOn", "pullOff"].includes(fields.pitch.value))
         techniques.push({
           type: fields.pitch.value,
@@ -197,6 +223,7 @@ export function initializeTabEditor({ onStart, onStop }) {
           rateHz: Number(fields.rate.value),
         });
       if (fields.mute.checked) techniques.push({ type: "palmMute" });
+      techniques.push(...extraTechniques.read());
     }
     return {
       string: Number(fields.string.value),
@@ -255,6 +282,12 @@ export function initializeTabEditor({ onStart, onStop }) {
       !["slide", "hammerOn", "pullOff"].includes(fields.pitch.value);
     fields.depth.disabled = techniqueBlocked || !fields.vibrato.checked;
     fields.rate.disabled = fields.depth.disabled;
+    extraTechniques.disable(
+      techniqueBlocked,
+      fields.pitch.value === "bend",
+      region().ids.length === 2 && region().strings.length === 1,
+      blocked(),
+    );
     for (const control of [fields.pitch, fields.vibrato, fields.mute])
       control.disabled = techniqueBlocked;
     find("editorPlay").disabled = blocked() || !session.document.events.length;

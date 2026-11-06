@@ -142,6 +142,16 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     "editorDownload",
     "editorPlaybackStatus",
     "editorMeter",
+    "editorLetRing",
+    "editorTapping",
+    "editorHarmonic",
+    "editorTremolo",
+    "editorPickDirection",
+    "editorBendCurve",
+    "editorBendShape",
+    "editorBendGraph",
+    "editorLinkNotes",
+    "editorLinkType",
     "editorPitchTechnique",
     "editorBend",
     "editorTargetFret",
@@ -422,6 +432,38 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     const beforeDuplicateTicks = ticks();
     elements.editorTable.fire("click", { target: duplicate });
     assert.equal(ticks(), beforeDuplicateTicks + 3840);
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
+    choose(originals[0].id, 6);
+    elements.editorLetRing.checked = true;
+    elements.editorLetRing.fire("change");
+    assert.ok(
+      notes()[0].notes[0].techniques.some(
+        (effect) => effect.type === "letRing",
+      ),
+    );
+    elements.editorUndo.click();
+    choose(originals[0].id, 6);
+    choose(originals[1].id, 6, { shiftKey: true });
+    elements.editorLinkType.value = "slide";
+    elements.editorLinkNotes.click();
+    assert.ok(
+      notes()[0].notes[0].techniques.some(
+        (effect) => effect.type === "slide" && effect.targetFret === 3,
+      ),
+    );
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
+    choose(originals[0].id, 6);
+    elements.editorPitchTechnique.value = "bend";
+    elements.editorPitchTechnique.fire("change");
+    elements.editorBendShape.value = "release";
+    elements.editorBendShape.fire("change");
+    assert.equal(
+      elements.editorBendGraph.attributes.points,
+      "0,30 50,23 100,30",
+    );
+    elements.editorUndo.click();
     elements.editorUndo.click();
     assert.equal(saved.get("ritim-score-v1"), initial);
   } finally {

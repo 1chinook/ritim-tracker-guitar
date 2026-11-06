@@ -31,6 +31,16 @@ export function noteLabel(note) {
     if (technique.type === "hammerOn") label += `h${technique.targetFret}`;
     if (technique.type === "pullOff") label += `p${technique.targetFret}`;
     if (technique.type === "palmMute") label += " PM";
+    if (technique.type === "bend" && technique.curve?.at(-1).semitones === 0)
+      label += "↘";
+    if (technique.type === "letRing") label += " LR";
+    if (technique.type === "harmonic")
+      label = (technique.kind === "natural" ? "◇" : "◆") + label;
+    if (technique.type === "tapping") label = "T" + label;
+    if (technique.type === "tremoloPicking")
+      label += " ≋" + technique.subdivision;
+    if (technique.type === "pickDirection")
+      label += technique.direction === "down" ? " ∏" : " ∨";
   }
   return label;
 }

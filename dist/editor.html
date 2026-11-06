@@ -155,6 +155,111 @@
                   Ölü nota ×</label
                 >
               </div>
+
+              <div class="technique-toggles">
+                <label
+                  ><input
+                    id="editorLetRing"
+                    type="checkbox"
+                    data-editor-control
+                  />
+                  Let ring</label
+                >
+                <label
+                  ><input
+                    id="editorTapping"
+                    type="checkbox"
+                    data-editor-control
+                  />
+                  Tapping</label
+                >
+              </div>
+              <div class="editor-fields">
+                <label
+                  ><span>Harmonik</span
+                  ><select id="editorHarmonic" data-editor-control>
+                    <option value="none">Normal</option>
+                    <option value="natural">Doğal harmonik</option>
+                    <option value="artificial">Yapay harmonik</option>
+                  </select></label
+                >
+                <label
+                  ><span>Tremolo picking</span
+                  ><select id="editorTremolo" data-editor-control>
+                    <option value="none">Normal</option>
+                    <option value="8">1/8</option>
+                    <option value="16">1/16</option>
+                    <option value="32">1/32</option>
+                  </select></label
+                >
+                <label
+                  ><span>Pena yönü</span
+                  ><select id="editorPickDirection" data-editor-control>
+                    <option value="none">Belirtilmedi</option>
+                    <option value="down">Aşağı ∏</option>
+                    <option value="up">Yukarı ∨</option>
+                  </select></label
+                >
+              </div>
+              <details>
+                <summary>Bend eğrisi ve release</summary>
+                <div class="editor-fields">
+                  <label
+                    ><span>Hazır eğri</span
+                    ><select id="editorBendShape" data-editor-control>
+                      <option value="">Eğri seç</option>
+                      <option value="hold">Yükselt ve tut</option>
+                      <option value="release">Yükselt ve bırak</option>
+                      <option value="preBend">Ön bend ve bırak</option>
+                    </select></label
+                  >
+                  <label class="bend-curve-field"
+                    ><span>Eğri noktaları</span
+                    ><input
+                      id="editorBendCurve"
+                      type="text"
+                      placeholder="0:0, 0.5:2, 1:0"
+                      data-editor-control
+                  /></label>
+                </div>
+                <svg
+                  class="bend-preview"
+                  viewBox="0 0 100 32"
+                  role="img"
+                  aria-label="Bend eğrisi"
+                >
+                  <polyline
+                    id="editorBendGraph"
+                    points=""
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  />
+                </svg>
+                <p class="help">
+                  Her nokta süre oranı:yarım ses biçimindedir. Süre 0 ile 1
+                  arasında ilerler. Bırakmak için son değeri 0 yap.
+                </p>
+              </details>
+              <div class="editor-fields note-link-tools">
+                <label
+                  ><span>İki notayı bağla</span
+                  ><select id="editorLinkType" data-editor-control>
+                    <option value="slide">Slide</option>
+                    <option value="hammerOn">Hammer-on</option>
+                    <option value="pullOff">Pull-off</option>
+                  </select></label
+                >
+                <button class="ghost" id="editorLinkNotes" type="button">
+                  Bağla
+                </button>
+              </div>
+              <p class="help">
+                Shift ile aynı telde yan yana iki nota seç. Bağla düğmesi ilk
+                notayı ikinciye bağlar. Doğal harmonikler 5, 7, 12, 19 ve 24.
+                perdelerde kullanılabilir. Pena yönü tab işaretidir.
+              </p>
+
               <details>
                 <summary>Vibrato ayarları</summary>
                 <div class="editor-fields">

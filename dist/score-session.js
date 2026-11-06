@@ -213,6 +213,44 @@ export class ScoreSession {
     });
   }
 
+  linkNotes(firstId, secondId, string, type) {
+    const index = this.document.events.findIndex(
+      (event) => event.id === firstId,
+    );
+    const first = this.document.events[index]?.notes.find(
+      (note) => note.string === string,
+    );
+    const next = this.document.events[index + 1];
+    const target = next?.notes.find((note) => note.string === string);
+    if (
+      !["slide", "hammerOn", "pullOff"].includes(type) ||
+      next?.id !== secondId ||
+      !first ||
+      !target
+    )
+      throw new Error("Aynı telde yan yana iki nota seç.");
+    if (
+      [first, target].some((note) =>
+        note.techniques.some((effect) =>
+          ["deadNote", "tremoloPicking", "harmonic"].includes(effect.type),
+        ),
+      )
+    )
+      throw new Error(
+        "Bağlanacak notalarda ölü nota, harmonik veya tremolo olmamalı.",
+      );
+    this.setVoice(firstId, {
+      ...first,
+      techniques: [
+        ...first.techniques.filter(
+          (effect) =>
+            !["bend", "slide", "hammerOn", "pullOff"].includes(effect.type),
+        ),
+        { type, targetFret: target.fret },
+      ],
+    });
+  }
+
   removeMeasure(index) {
     const measure = splitMeasures(this.document)[index];
     if (!measure?.segments.length) return;

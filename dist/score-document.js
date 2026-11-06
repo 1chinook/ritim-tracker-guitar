@@ -37,12 +37,17 @@ function integerInRange(value, minimum, maximum) {
 function validateTechnique(effect, fret, path) {
   const fields = {
     vibrato: ["type", "depthCents", "rateHz"],
-    bend: ["type", "semitones"],
+    bend: ["type", "semitones", "curve"],
     slide: ["type", "targetFret"],
     hammerOn: ["type", "targetFret"],
     pullOff: ["type", "targetFret"],
     palmMute: ["type"],
     deadNote: ["type"],
+    letRing: ["type"],
+    harmonic: ["type", "kind"],
+    tapping: ["type"],
+    tremoloPicking: ["type", "subdivision"],
+    pickDirection: ["type", "direction"],
   };
   requireValue(Object.hasOwn(fields, effect?.type), path, "Unknown technique");
   checkFields(effect, fields[effect.type], path);
@@ -69,7 +74,43 @@ function validateTechnique(effect, fret, path) {
       path,
       "Bend must be greater than 0 and at most 4 semitones",
     );
-    return { type: "bend", semitones: effect.semitones };
+    const result = { type: "bend", semitones: effect.semitones };
+    if (effect.curve !== undefined) {
+      requireValue(
+        Array.isArray(effect.curve) &&
+          effect.curve.length >= 2 &&
+          effect.curve.length <= 8,
+        path,
+        "Bend curve needs 2–8 points",
+      );
+      let previous = -1;
+      result.curve = effect.curve.map((point) => {
+        checkFields(point, ["position", "semitones"], path);
+        requireValue(
+          Number.isFinite(point.position) &&
+            point.position > previous &&
+            point.position >= 0 &&
+            point.position <= 1,
+          path,
+          "Bend positions must increase from 0 to 1",
+        );
+        requireValue(
+          Number.isFinite(point.semitones) &&
+            point.semitones >= 0 &&
+            point.semitones <= effect.semitones,
+          path,
+          "Invalid bend pitch",
+        );
+        previous = point.position;
+        return { position: point.position, semitones: point.semitones };
+      });
+      requireValue(
+        result.curve[0].position === 0 && result.curve.at(-1).position === 1,
+        path,
+        "Bend curve must include both endpoints",
+      );
+    }
+    return result;
   }
   if (["slide", "hammerOn", "pullOff"].includes(effect.type)) {
     requireValue(
@@ -90,6 +131,35 @@ function validateTechnique(effect, fret, path) {
     );
     return { type: effect.type, targetFret: effect.targetFret };
   }
+  if (effect.type === "harmonic") {
+    requireValue(
+      ["natural", "artificial"].includes(effect.kind),
+      path,
+      "Invalid harmonic kind",
+    );
+    requireValue(
+      effect.kind !== "natural" || [5, 7, 12, 19, 24].includes(fret),
+      path,
+      "Natural harmonic requires fret 5, 7, 12, 19 or 24",
+    );
+    return { type: effect.type, kind: effect.kind };
+  }
+  if (effect.type === "tremoloPicking") {
+    requireValue(
+      [8, 16, 32].includes(effect.subdivision),
+      path,
+      "Invalid tremolo subdivision",
+    );
+    return { type: effect.type, subdivision: effect.subdivision };
+  }
+  if (effect.type === "pickDirection") {
+    requireValue(
+      ["up", "down"].includes(effect.direction),
+      path,
+      "Invalid pick direction",
+    );
+    return { type: effect.type, direction: effect.direction };
+  }
   return { type: effect.type };
 }
 
@@ -99,7 +169,7 @@ function validateVoice(voice, path) {
   requireValue(integerInRange(voice.fret, 0, 24), path, "Fret must be 0–24");
   const effects = voice.techniques ?? [];
   requireValue(
-    Array.isArray(effects) && effects.length <= 7,
+    Array.isArray(effects) && effects.length <= 12,
     path,
     "Invalid technique list",
   );

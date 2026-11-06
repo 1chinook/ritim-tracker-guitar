@@ -183,3 +183,19 @@ npm run format
 ```
 
 Planned improvements include Guitar Pro/MusicXML, multiple instruments, more natural guitar sound, and note-by-note performance alignment.
+
+### Genişletilmiş gitar teknikleri / Extended guitar techniques
+
+Teknikler menüsünde let ring, doğal/yapay harmonik, tapping, tremolo picking ve pena yönü bulunur.
+Bend için hazır yükselt/tut/bırak eğrileri veya düzenlenebilir süre:yarım ses noktaları kullanılabilir.
+Shift ile aynı telde yan yana iki nota seçip Slide, Hammer-on veya Pull-off ile bağlayabilirsin.
+Bağlı notalar aynı ses kaynağında devam eder. Let ring sonraki aynı teldeki notaya kadar,
+son adımda en çok iki saniye uzar. Ses örneğinin doğal uzunluğu duyulan çınlamayı sınırlar.
+Harmonik ve tapping tınıları yaklaşık önizlemelerdir. Pena yönü görsel bir işarettir.
+
+The Techniques menu supports let ring, natural/artificial harmonics, tapping, tremolo picking and pick direction.
+Bends offer hold/release/pre-bend presets and editable time-fraction:semitone points.
+Shift-select two adjacent notes on one string to connect them with slide, hammer-on or pull-off.
+Linked notes share one sound source. Let ring lasts until the next note on the same string, with a two-second
+tail after the last step, limited by natural sample length. Harmonic and tapping timbres are approximate.
+Pick direction is notation only. Natural harmonics use frets 5, 7, 12, 19 or 24.

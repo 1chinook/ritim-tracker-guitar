@@ -1,3 +1,4 @@
+import { linkedTransition } from "./score-performance.js";
 import { splitMeasures, noteLabel, midiLabel } from "./score-notation.js";
 import { t } from "./preferences.js";
 import { maximumNotes } from "./tab-model.js";
@@ -157,6 +158,19 @@ export function renderScoreGrid(container, score, state) {
           mark.className = "score-mark";
           mark.textContent = text;
           button.replaceChildren(mark);
+          const transition = note.techniques.find((effect) =>
+            ["slide", "hammerOn", "pullOff"].includes(effect.type),
+          );
+          const target = score.events[segment.eventIndex + 1]?.notes.find(
+            (voice) => voice.string === row + 1,
+          );
+          if (!segment.continuation && linkedTransition(note, target)) {
+            const link = document.createElement("span");
+            link.className = "note-link";
+            link.textContent = "⤳";
+            link.title = transition.type + " → " + (segment.eventIndex + 2);
+            button.append(link);
+          }
         }
         td.append(button);
         tr.append(td);

@@ -1,5 +1,32 @@
 // Türkçe metinler aynı zamanda çeviri anahtarıdır. Dinamik değerler {ad} ile belirtilir.
 export const english = {
+  Harmonik: "Harmonic",
+  "Doğal harmonik": "Natural harmonic",
+  "Yapay harmonik": "Artificial harmonic",
+  "Pena yönü": "Pick direction",
+  Belirtilmedi: "Unspecified",
+  "Aşağı ∏": "Down ∏",
+  "Yukarı ∨": "Up ∨",
+  "Bend eğrisi ve release": "Bend curve and release",
+  "Hazır eğri": "Curve preset",
+  "Eğri seç": "Choose curve",
+  "Yükselt ve tut": "Bend and hold",
+  "Yükselt ve bırak": "Bend and release",
+  "Ön bend ve bırak": "Pre-bend and release",
+  "Eğri noktaları": "Curve points",
+  "Bend eğrisi": "Bend curve",
+  "İki notayı bağla": "Connect two notes",
+  Bağla: "Connect",
+  "Her nokta süre oranı:yarım ses biçimindedir. Süre 0 ile 1 arasında ilerler. Bırakmak için son değeri 0 yap.":
+    "Each point is time fraction:semitones. Time runs from 0 to 1. End at 0 for a release.",
+  "Shift ile aynı telde yan yana iki nota seç. Bağla düğmesi ilk notayı ikinciye bağlar. Doğal harmonikler 5, 7, 12, 19 ve 24. perdelerde kullanılabilir. Pena yönü tab işaretidir.":
+    "Shift-select two adjacent notes on one string. Connect links the first to the second. Natural harmonics use frets 5, 7, 12, 19 and 24. Pick direction is a notation mark.",
+  "Eğriyi 0:0, 0.5:2, 1:0 biçiminde yaz.":
+    "Use curve points such as 0:0, 0.5:2, 1:0.",
+  "Aynı telde yan yana iki nota seç.":
+    "Select two adjacent notes on the same string.",
+  "Bağlanacak notalarda ölü nota, harmonik veya tremolo olmamalı.":
+    "Linked notes cannot use dead notes, harmonics or tremolo.",
   "▶ Çal": "▶ Play",
   "■ Durdur": "■ Stop",
   "Tempo · BPM": "Tempo · BPM",

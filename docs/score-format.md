@@ -32,7 +32,7 @@ Aşağıdaki teknikler doğrulanır, tabda işaretlenir ve gitar örnekleri üze
 ]
 ```
 
-Bu liste tek notaya aynı anda uygulanacak bir kombinasyon değildir. Ölü nota tek başına kullanılır; hammer-on ve pull-off hedefleri başlangıç perdesine göre doğru yönde olmalıdır. Bir notada bend veya slide/hammer-on/pull-off geçişinden biri seçilir; vibrato bunlarla birlikte kullanılabilir. Daha ayrıntılı bend eğrileri, let ring, harmonikler ve bir sonraki nota bağlantıları sonraki adımlardır.
+Bu liste tek notaya aynı anda uygulanacak bir kombinasyon değildir. Ölü nota tek başına kullanılır; hammer-on ve pull-off hedefleri başlangıç perdesine göre doğru yönde olmalıdır. Bir notada bend veya slide/hammer-on/pull-off geçişinden biri seçilir; vibrato bunlarla birlikte kullanılabilir. Bend eğrileri, let ring, harmonikler ve bitişik nota bağlantıları da desteklenir.
 
 ## Veri kaybını önleme
 
@@ -56,3 +56,18 @@ Bend miktarı yarım ses (semitone), vibrato derinliği cent, hızı Hz ile tutu
 The versioned score document is used by editing, storage, notation, and sample-based playback. Chord voices share an event; an empty event is a rest. Measure splitting preserves event identity and does not retrigger the audio. Pitch transitions occur within the current event, rather than linking separately entered notes. Undo/redo includes chords, techniques, tempo and meter. JSON round-trips retain the full score; legacy drafts remain backed up under their old key.
 
 Playback uses bundled Distortion or Acoustic guitar samples, filtering, amplitude envelopes and pitch automation. A short filtered noise burst approximates dead notes. Techniques are approximate and long notes are limited by the natural sample length. See `dist/sounds/CREDITS.md` for attribution. Multiple instruments, variable meter/tempo maps, repeats and full Guitar Pro/MusicXML support are future work.
+
+## Extended techniques
+
+The version 1 document accepts letRing, tapping, harmonic (kind natural or artificial),
+tremoloPicking (subdivision 8, 16 or 32), and pickDirection (up or down).
+Bend optionally includes 2–8 ordered curve points with position 0–1 and semitones
+0–bend.semitones, including both endpoints. Existing bend documents keep their old behavior.
+Adjacent notes on the same string with a matching transition target play as a single
+legato voice. Editing or removing the target restores the source note's standalone transition.
+Let ring extends until the next attack on that string, with at most two seconds after
+the score ends. Recorded sample length limits the audible sustain.
+Natural harmonics at frets 5, 7, 12, 19 and 24 map to open-string intervals 24, 19,
+12, 19 and 24 semitones. Artificial harmonics add an octave.
+Harmonic and tapping timbres are approximations based on the bundled samples.
+Pick direction is notation only. Tremolo re-attacks follow the score BPM.

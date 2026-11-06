@@ -1,3 +1,4 @@
+import { buildPerformance } from "./score-performance.js";
 import { compileScore } from "./score-timeline.js";
 import { scheduleVoice } from "./score-audio.js";
 import { loadGuitarSamples, sampleMidi } from "./guitar-samples.js";
@@ -18,6 +19,7 @@ export class ScorePlayer {
   async play(document, tone = "distortion") {
     const timeline = compileScore(document);
     if (!timeline.events.length) return;
+    const performance = buildPerformance(timeline);
     this.stop();
     const generation = this.generation;
     this.playing = true;
@@ -36,23 +38,20 @@ export class ScorePlayer {
       );
       if (generation !== this.generation) return;
       const start = context.currentTime + 0.08;
-      for (const event of timeline.events) {
-        event.notes.forEach((note) =>
-          scheduleVoice(
-            context,
-            note,
-            event.duration,
-            start + event.start,
-            event.notes.length,
-            samples.get(sampleMidi(note.midi)),
-          ),
+      for (const voice of performance.voices)
+        scheduleVoice(
+          context,
+          voice.note,
+          voice.duration,
+          start + voice.start,
+          voice.chordSize,
+          samples.get(sampleMidi(voice.note.midi)),
         );
-      }
       let previous = null;
       const update = () => {
         if (generation !== this.generation) return;
         const elapsed = context.currentTime - start;
-        if (elapsed >= timeline.duration) {
+        if (elapsed >= performance.duration) {
           this.stop();
           return;
         }

@@ -203,3 +203,27 @@ body[data-page="editor"] .editor-section h2 {
     gap: 8px;
   }
 }
+
+.bend-curve-field {
+  flex: 1;
+  min-width: 190px;
+}
+.bend-curve-field input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.bend-preview {
+  width: 180px;
+  height: 58px;
+  color: var(--green);
+  border-bottom: 1px solid var(--line);
+}
+.note-link-tools {
+  align-items: end;
+}
+#editorTable .note-link {
+  display: block;
+  color: var(--green);
+  font-size: 11px;
+  line-height: 12px;
+}

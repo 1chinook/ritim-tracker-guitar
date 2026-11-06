@@ -10,12 +10,26 @@ export function planVoice(note, duration) {
     : muted
       ? Math.min(0.16, duration * 0.8)
       : duration * 0.96;
-  const pitch = [{ time: 0, frequency: note.frequency, ramp: false }];
+  const harmonic = has("harmonic");
+  let semitones = 0;
+  if (harmonic?.kind === "natural")
+    semitones = { 5: 24, 7: 19, 12: 12, 19: 19, 24: 24 }[note.fret] - note.fret;
+  if (harmonic?.kind === "artificial") semitones = 12;
+  const frequency = note.frequency * 2 ** (semitones / 12);
+  const pitch = [{ time: 0, frequency, ramp: false }];
   const bend = has("bend");
-  if (bend)
+  if (bend?.curve) {
+    pitch.length = 0;
+    for (const point of bend.curve)
+      pitch.push({
+        time: point.position * length,
+        frequency: frequency * 2 ** (point.semitones / 12),
+        ramp: point.position !== 0,
+      });
+  } else if (bend)
     pitch.push({
       time: length * 0.7,
-      frequency: note.frequency * 2 ** (bend.semitones / 12),
+      frequency: frequency * 2 ** (bend.semitones / 12),
       ramp: true,
     });
   const transition = effects.find((effect) =>
@@ -23,7 +37,7 @@ export function planVoice(note, duration) {
   );
   if (transition) {
     const frequency = midiToFrequency(
-      note.midi + transition.targetFret - note.fret,
+      note.midi + semitones + transition.targetFret - note.fret,
     );
     if (transition.type === "slide")
       pitch.push({ time: length * 0.8, frequency, ramp: true });
@@ -35,25 +49,29 @@ export function planVoice(note, duration) {
     dead,
     cutoff: dead ? 900 : muted ? 650 : 10000,
     vibrato: has("vibrato") ?? null,
+    tapping: Boolean(has("tapping")),
+    harmonic: Boolean(harmonic),
   };
 }
 
-export function scheduleVoice(
+function scheduleSingleVoice(
   context,
   note,
   duration,
   start,
   chordSize,
   sample,
+  plan = planVoice(note, duration),
 ) {
-  const plan = planVoice(note, duration);
   if (!plan.dead && !sample) throw new Error("Missing guitar sample");
   const gain = context.createGain();
   const filter = context.createBiquadFilter();
   filter.type = "lowpass";
   filter.frequency.setValueAtTime(plan.cutoff, start);
-  const volume = 0.65 / Math.sqrt(chordSize);
-  const attack = Math.min(0.004, plan.length / 4);
+  for (const point of plan.filters ?? [])
+    filter.frequency.setValueAtTime(point.cutoff, start + point.time);
+  const volume = (plan.tapping ? 0.48 : 0.65) / Math.sqrt(chordSize);
+  const attack = Math.min(plan.tapping ? 0.001 : 0.004, plan.length / 4);
   const release = Math.min(0.035, plan.length / 3);
   gain.gain.setValueAtTime(0.0001, start);
   gain.gain.exponentialRampToValueAtTime(volume, start + attack);
@@ -61,8 +79,7 @@ export function scheduleVoice(
   gain.gain.exponentialRampToValueAtTime(0.0001, start + plan.length);
   filter.connect(gain).connect(context.destination);
   const source = context.createBufferSource();
-  let vibrato;
-  let depth;
+  const modulation = [];
   if (plan.dead) {
     const buffer = context.createBuffer(
       1,
@@ -86,18 +103,24 @@ export function scheduleVoice(
         );
       else source.playbackRate.setValueAtTime(rate, start + point.time);
     }
-    if (plan.vibrato) {
-      vibrato = context.createOscillator();
-      depth = context.createGain();
-      vibrato.frequency.value = plan.vibrato.rateHz;
-      depth.gain.setValueAtTime(0, start);
+    const vibratos =
+      plan.vibratos ??
+      (plan.vibrato
+        ? [{ offset: 0, length: plan.length, effect: plan.vibrato }]
+        : []);
+    for (const item of vibratos) {
+      const vibrato = context.createOscillator();
+      const depth = context.createGain();
+      vibrato.frequency.value = item.effect.rateHz;
+      depth.gain.setValueAtTime(0, start + item.offset);
       depth.gain.linearRampToValueAtTime(
-        plan.vibrato.depthCents,
-        start + plan.length * 0.25,
+        item.effect.depthCents,
+        start + item.offset + item.length * 0.25,
       );
       vibrato.connect(depth).connect(source.detune);
-      vibrato.start(start);
-      vibrato.stop(start + plan.length + 0.01);
+      vibrato.start(start + item.offset);
+      vibrato.stop(start + item.offset + item.length);
+      modulation.push(vibrato, depth);
     }
   }
   source.connect(filter);
@@ -107,7 +130,113 @@ export function scheduleVoice(
     source.disconnect();
     filter.disconnect();
     gain.disconnect();
-    vibrato?.disconnect();
-    depth?.disconnect();
+    for (const node of modulation) node.disconnect();
   };
+}
+
+function frequencyAt(points, time) {
+  let previous = points[0];
+  for (const point of points.slice(1)) {
+    if (point.time > time) {
+      if (!point.ramp) return previous.frequency;
+      const ratio = (time - previous.time) / (point.time - previous.time);
+      return (
+        previous.frequency * (point.frequency / previous.frequency) ** ratio
+      );
+    }
+    previous = point;
+  }
+  return previous.frequency;
+}
+
+export function scheduleVoice(
+  context,
+  note,
+  duration,
+  start,
+  chordSize,
+  sample,
+) {
+  const segments = note.segments ?? [{ note, duration, offset: 0 }];
+  const plan = planVoice(note, duration);
+  plan.pitch = segments.flatMap((segment) =>
+    planVoice(segment.note, segment.duration).pitch.map((point) => ({
+      ...point,
+      time: point.time + segment.offset,
+    })),
+  );
+  plan.vibratos = segments.flatMap((segment) => {
+    const part = planVoice(segment.note, segment.duration);
+    return part.vibrato
+      ? [{ offset: segment.offset, length: part.length, effect: part.vibrato }]
+      : [];
+  });
+  plan.filters = segments.map((segment) => ({
+    time: segment.offset,
+    cutoff: planVoice(segment.note, segment.duration).cutoff,
+  }));
+  const last = segments.at(-1);
+  plan.length = last.offset + planVoice(last.note, last.duration).length;
+  const tremolo = note.techniques.find(
+    (effect) => effect.type === "tremoloPicking",
+  );
+  if (!tremolo) {
+    scheduleSingleVoice(
+      context,
+      note,
+      duration,
+      start,
+      chordSize,
+      sample,
+      plan,
+    );
+    return;
+  }
+  const interval = ((60 / (note.bpm ?? 90)) * 4) / tremolo.subdivision;
+  const attackDuration = note.attackDuration ?? duration;
+  const rings = note.techniques.some((effect) => effect.type === "letRing");
+  for (let offset = 0; offset < attackDuration; offset += interval) {
+    const length =
+      rings && offset + interval >= attackDuration
+        ? duration - offset
+        : Math.min(interval * 0.92, attackDuration - offset);
+    const pitch = [
+      { time: 0, frequency: frequencyAt(plan.pitch, offset), ramp: false },
+      ...plan.pitch
+        .filter((point) => point.time > offset && point.time < offset + length)
+        .map((point) => ({ ...point, time: point.time - offset })),
+      {
+        time: length,
+        frequency: frequencyAt(plan.pitch, offset + length),
+        ramp: true,
+      },
+    ];
+    scheduleSingleVoice(
+      context,
+      note,
+      length,
+      start + offset,
+      chordSize,
+      sample,
+      {
+        ...plan,
+        length,
+        pitch,
+        filters: [{ time: 0, cutoff: plan.cutoff }],
+        vibratos: plan.vibratos
+          .filter(
+            (item) =>
+              item.offset < offset + length &&
+              item.offset + item.length > offset,
+          )
+          .map((item) => ({
+            ...item,
+            offset: Math.max(0, item.offset - offset),
+            length:
+              Math.min(item.offset + item.length, offset + length) -
+              Math.max(item.offset, offset),
+          })),
+      },
+    );
+  }
 }
