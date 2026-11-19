@@ -28,10 +28,19 @@ function mockMicrophone(context) {
     }
     async resume() {}
     createAnalyser() {
-      return { getFloatTimeDomainData() {} };
+      return { getFloatTimeDomainData() {}, disconnect() {}, connect() {} };
     }
     createMediaStreamSource() {
-      return { connect() {} };
+      return { connect() {}, disconnect() {} };
+    }
+    createGain() {
+      return { connect() {}, disconnect() {} };
+    }
+    createChannelSplitter() {
+      return { connect() {}, disconnect() {} };
+    }
+    createMediaStreamDestination() {
+      return { stream: { getTracks: () => [] }, disconnect() {} };
     }
     async close() {
       this.state = "closed";

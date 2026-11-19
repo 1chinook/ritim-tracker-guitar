@@ -227,3 +227,15 @@ body[data-page="editor"] .editor-section h2 {
   font-size: 11px;
   line-height: 12px;
 }
+
+.tuning-notes {
+  flex: 1;
+  min-width: 220px;
+}
+.tuning-notes input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.score-file-menu ul {
+  padding-left: 20px;
+}

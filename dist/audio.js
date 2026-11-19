@@ -1,6 +1,11 @@
+import { GuitarInput } from "./guitar-input.js";
+
 export class Metronome {
   context = null;
   timer = null;
+  generation = 0;
+  countTimer = null;
+  countFinish = null;
 
   get isPlaying() {
     return this.timer !== null;
@@ -29,21 +34,37 @@ export class Metronome {
 
   async start(bpm) {
     this.stop();
+    const generation = this.generation;
     await this.prepare();
+    if (generation !== this.generation) return;
     this.tick();
     this.timer = setInterval(() => this.tick(), 60000 / bpm);
   }
 
   async countIn(bpm, onBeat) {
+    this.stop();
+    const generation = this.generation;
     await this.prepare();
     for (let remaining = 4; remaining > 0; remaining--) {
+      if (generation !== this.generation) return false;
       onBeat(remaining);
       this.tick();
-      await new Promise((resolve) => setTimeout(resolve, 60000 / bpm));
+      await new Promise((resolve) => {
+        this.countFinish = resolve;
+        this.countTimer = setTimeout(() => {
+          this.countFinish = null;
+          resolve();
+        }, 60000 / bpm);
+      });
     }
+    return generation === this.generation;
   }
 
   stop() {
+    this.generation++;
+    clearTimeout(this.countTimer);
+    this.countFinish?.();
+    this.countFinish = null;
     clearInterval(this.timer);
     this.timer = null;
   }
@@ -54,68 +75,74 @@ export class Metronome {
 }
 
 export class GuitarRecorder {
+  generation = 0;
   constructor(callbacks) {
     this.callbacks = callbacks;
+    this.input = new GuitarInput({
+      onLevel: (level) => this.callbacks.onLevel?.(level),
+      onEnded: () => this.fail(),
+    });
   }
-
   get isRecording() {
     return this.recorder?.state === "recording";
   }
-
-  async prepare() {
-    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-      throw new Error("Recording unavailable");
+  async prepare(options) {
+    this.dispose();
+    const generation = this.generation;
+    if (!globalThis.MediaRecorder)
+      throw new Error("Ses kaydı bu tarayıcıda desteklenmiyor.");
+    const info = await this.input.open(options);
+    if (!info || generation !== this.generation) return null;
+    try {
+      const mimeType = [
+        "audio/webm;codecs=opus",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+      ].find((type) => MediaRecorder.isTypeSupported(type));
+      this.recorder = new MediaRecorder(
+        this.input.stream,
+        mimeType ? { mimeType } : {},
+      );
+      this.analyser = this.input.analyser;
+      return info;
+    } catch (error) {
+      this.dispose();
+      throw error;
     }
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      },
-    });
-    this.context = new AudioContext();
-    await this.context.resume();
-    this.analyser = this.context.createAnalyser();
-    this.context.createMediaStreamSource(this.stream).connect(this.analyser);
-    const mimeType = [
-      "audio/webm;codecs=opus",
-      "audio/mp4",
-      "audio/ogg;codecs=opus",
-    ].find((type) => MediaRecorder.isTypeSupported(type));
-    this.recorder = new MediaRecorder(
-      this.stream,
-      mimeType ? { mimeType } : {},
+  }
+  fail() {
+    this.dispose();
+    this.callbacks.onError(
+      "Kayıt kesildi. Ses kartı veya giriş bağlantını kontrol edip tekrar dene.",
     );
   }
-
   start() {
+    if (!this.recorder || !this.input.running)
+      throw new Error("Ses girişi bağlantısı kesildi. Tekrar başlat.");
+    const recorder = this.recorder;
+    const generation = this.generation;
     const chunks = [];
-    let failed = false;
-    this.recorder.ondataavailable = (event) => {
+    recorder.ondataavailable = (event) => {
       if (event.data.size) chunks.push(event.data);
     };
-    this.recorder.onerror = () => {
-      failed = true;
-      this.callbacks.onError(
-        "Kayıt kesildi. Mikrofon bağlantını kontrol edip tekrar dene.",
-      );
-      this.dispose();
+    recorder.onerror = () => {
+      if (generation === this.generation) this.fail();
     };
-    this.recorder.onstop = () => {
-      const mimeType = this.recorder.mimeType;
+    recorder.onstop = () => {
+      if (generation !== this.generation) return;
+      const mimeType = recorder.mimeType;
       const extension = mimeType.includes("mp4")
         ? "m4a"
         : mimeType.includes("ogg")
           ? "ogg"
           : "webm";
       this.dispose();
-      if (!failed)
-        this.callbacks.onComplete(
-          new Blob(chunks, { type: mimeType }),
-          extension,
-        );
+      this.callbacks.onComplete(
+        new Blob(chunks, { type: mimeType }),
+        extension,
+      );
     };
-    this.recorder.start(1000);
+    recorder.start(1000);
     this.startedAt = performance.now();
     this.callbacks.onTime(0);
     this.clock = setInterval(() => {
@@ -125,7 +152,6 @@ export class GuitarRecorder {
     }, 250);
     this.drawWaveform();
   }
-
   drawWaveform() {
     const canvas = this.callbacks.canvas;
     const context = canvas.getContext("2d");
@@ -144,15 +170,22 @@ export class GuitarRecorder {
     context.stroke();
     this.animation = requestAnimationFrame(() => this.drawWaveform());
   }
-
   stop() {
     if (this.isRecording) this.recorder.stop();
   }
-
   dispose() {
+    this.generation++;
     clearInterval(this.clock);
-    cancelAnimationFrame(this.animation);
-    this.stream?.getTracks().forEach((track) => track.stop());
-    if (this.context?.state !== "closed") void this.context?.close();
+    if (this.animation !== undefined) cancelAnimationFrame(this.animation);
+    this.animation = undefined;
+    if (this.recorder) {
+      this.recorder.ondataavailable =
+        this.recorder.onerror =
+        this.recorder.onstop =
+          null;
+      if (this.recorder.state === "recording") this.recorder.stop();
+    }
+    this.recorder = null;
+    this.input.close();
   }
 }

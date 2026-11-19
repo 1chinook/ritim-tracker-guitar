@@ -88,6 +88,105 @@
               >
             </div>
           </div>
+
+          <details class="technique-menu score-file-menu">
+            <summary>Dosya içe aktar</summary>
+            <div class="technique-panel">
+              <label class="score-import"
+                ><span>Guitar Pro / MusicXML</span
+                ><input
+                  id="editorScoreFile"
+                  type="file"
+                  accept=".gp3,.gp4,.gp5,.gpx,.gp,.xml,.musicxml,.mxl"
+                  data-editor-control
+              /></label>
+              <p id="editorImportInfo" class="help"></p>
+              <div class="editor-fields">
+                <label
+                  ><span>Parti / ses</span
+                  ><select
+                    id="editorImportPart"
+                    disabled
+                    data-editor-control
+                  ></select
+                ></label>
+                <label
+                  ><span>İlk ölçü</span
+                  ><input
+                    id="editorImportFirst"
+                    type="number"
+                    min="1"
+                    value="1"
+                    disabled
+                    data-editor-control
+                /></label>
+                <label
+                  ><span>Son ölçü</span
+                  ><input
+                    id="editorImportLast"
+                    type="number"
+                    min="1"
+                    value="4"
+                    disabled
+                    data-editor-control
+                /></label>
+              </div>
+              <div class="editor-actions">
+                <button class="ghost" id="editorImportPreview" disabled>
+                  Önizle
+                </button>
+                <button class="primary" id="editorImportApply" disabled>
+                  Tabı içe aktar
+                </button>
+                <button class="ghost" id="editorImportCancel" disabled>
+                  Vazgeç
+                </button>
+              </div>
+              <p id="editorImportStatus" class="help" role="status"></p>
+              <ul id="editorImportWarnings" class="help"></ul>
+              <p class="help">
+                Dosya bu tarayıcıda okunur. En fazla 10 MB ve 128 adım. Seçilen
+                tek parti ve ses aktarılır. Tempo ve ölçü değişimleri için
+                aralığı daralt.
+              </p>
+            </div>
+          </details>
+          <details class="technique-menu">
+            <summary>Gitar akordu</summary>
+            <div class="technique-panel">
+              <div class="editor-fields">
+                <label
+                  ><span>Akort düzeni</span
+                  ><select id="editorTuning" data-editor-control>
+                    <option value="standard">Standart E</option>
+                    <option value="dropD">Drop D</option>
+                    <option value="eb">Yarım ses pes</option>
+                    <option value="d">D standard</option>
+                    <option value="dropC">Drop C</option>
+                    <option value="dadgad">DADGAD</option>
+                    <option value="openG">Open G</option>
+                    <option value="openD">Open D</option>
+                    <option value="custom">Özel akort</option>
+                  </select></label
+                >
+                <label class="tuning-notes"
+                  ><span>İnce telden kalın tele</span
+                  ><input
+                    id="editorTuningNotes"
+                    type="text"
+                    value="E4 B3 G3 D3 A2 E2"
+                    data-editor-control
+                /></label>
+              </div>
+              <button class="ghost" id="editorApplyTuning">
+                Akordu uygula
+              </button>
+              <p class="help">
+                Perdeler korunur, tel etiketleri ve çalınan ses yeni akorda göre
+                değişir. Akort değişimi geri alınabilir ve projeyle kaydedilir.
+              </p>
+            </div>
+          </details>
           <details class="technique-menu">
             <summary>Teknikler</summary>
             <div class="technique-panel">

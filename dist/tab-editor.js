@@ -11,6 +11,8 @@ import { renderScoreGrid } from "./score-grid.js";
 import { compileScore } from "./score-timeline.js";
 import { setText, t } from "./preferences.js";
 import { parseRiff } from "./riff-input.js";
+import { initializeScoreImport } from "./score-import-controls.js";
+import { initializeTuningControls } from "./tuning-controls.js";
 import { initializeTechniqueControls } from "./technique-controls.js";
 import { maximumNotes } from "./tab-model.js";
 import { selectionBounds, selectedRegion } from "./score-selection.js";
@@ -65,6 +67,34 @@ export function initializeTabEditor({ onStart, onStop }) {
         syncFields();
       }, true);
     },
+  });
+  const tuningControls = initializeTuningControls({
+    find,
+    report: message,
+    apply: (tuning) =>
+      edit(() => {
+        session.change((score) => {
+          score.tuning = tuning;
+        });
+        syncFields();
+      }),
+  });
+  const scoreImport = initializeScoreImport({
+    find,
+    isBlocked: () => blocked(),
+    setBusy: (value) => {
+      loading = value;
+      render();
+    },
+    apply: (score) =>
+      edit(() => {
+        session.change((draft) => {
+          Object.assign(draft, score);
+        });
+        selected = null;
+        storageProtected = false;
+        syncFields();
+      }),
   });
   let session = new ScoreSession(example);
   let selected = null;
@@ -254,6 +284,8 @@ export function initializeTabEditor({ onStart, onStop }) {
     section.querySelectorAll("[data-editor-control]").forEach((control) => {
       control.disabled = blocked();
     });
+    scoreImport.setDisabled(unavailable || player.playing);
+    tuningControls.sync(session.document.tuning, blocked());
     const full = session.document.events.length >= maximumNotes;
     const event = selectedEvent();
     find("editorNew").disabled = blocked() || full;
@@ -891,7 +923,10 @@ export function initializeTabEditor({ onStart, onStop }) {
       : "Düzenlemeler bu tarayıcıda saklanır.",
   );
   return {
-    stop: () => player.stop(),
+    stop: () => {
+      player.stop();
+      scoreImport.close();
+    },
     setUnavailable(value) {
       unavailable = value;
       render();

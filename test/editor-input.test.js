@@ -165,6 +165,19 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
     "editorImport",
     "editorRiff",
     "editorInsertRiff",
+    "editorScoreFile",
+    "editorImportPart",
+    "editorImportFirst",
+    "editorImportLast",
+    "editorImportPreview",
+    "editorImportApply",
+    "editorImportCancel",
+    "editorImportInfo",
+    "editorImportStatus",
+    "editorImportWarnings",
+    "editorTuning",
+    "editorTuningNotes",
+    "editorApplyTuning",
     "editorTone",
   ];
   const page = readFileSync(
@@ -348,6 +361,20 @@ test("Tab hücresi, teknikler, JSON açma ve geri alma aynı taslağı güncelle
       elements.editorTable.fire("click", { target, ...extra });
       return target;
     };
+    elements.editorTuning.value = "dropD";
+    elements.editorTuning.fire("change");
+    assert.equal(elements.editorTuningNotes.value, "E4 B3 G3 D3 A2 D2");
+    elements.editorApplyTuning.click();
+    assert.deepEqual(
+      JSON.parse(saved.get("ritim-score-v1")).tuning,
+      [64, 59, 55, 50, 45, 38],
+    );
+    elements.editorUndo.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
+    elements.editorTuningNotes.value = "invalid";
+    elements.editorApplyTuning.click();
+    assert.equal(saved.get("ritim-score-v1"), initial);
+
     choose(originals[0].id, 6);
     elements.editorTable.fire("dblclick", { target: document.activeElement });
     let input = document.activeElement;

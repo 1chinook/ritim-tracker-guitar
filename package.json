@@ -7,9 +7,13 @@
     "start": "node scripts/serve.mjs",
     "test": "node --test",
     "format": "prettier --write dist scripts test README.md package.json",
-    "format:check": "prettier --check dist scripts test README.md package.json"
+    "format:check": "prettier --check dist scripts test README.md package.json",
+    "vendor:alphatab": "node scripts/vendor-alphatab.mjs"
   },
   "devDependencies": {
     "prettier": "3.6.2"
+  },
+  "dependencies": {
+    "@coderline/alphatab": "1.9.0"
   }
 }

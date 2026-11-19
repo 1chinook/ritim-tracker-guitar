@@ -2,6 +2,8 @@ import { analyzeRhythm, AnalysisError } from "./rhythm.js";
 import { GuitarRecorder, Metronome } from "./audio.js";
 import { initializePreferences, setText, t } from "./preferences.js";
 import { initializeTuner } from "./tuner.js";
+import { initializeInputControls } from "./input-controls.js";
+import { inputError } from "./guitar-input.js";
 
 initializePreferences();
 let latestResult = null;
@@ -19,6 +21,9 @@ const metronome = new Metronome();
 let selectedAudio = null;
 let audioUrl = null;
 let isBusy = false;
+let inputControls;
+let recordAttempt = 0;
+let leaving = false;
 
 function showMessage(message = "") {
   setText(elements.message, message);
@@ -27,6 +32,7 @@ function showMessage(message = "") {
 
 function setBusy(busy) {
   isBusy = busy;
+  inputControls?.setDisabled(busy);
   document
     .querySelectorAll(
       ".source, #fileInput, #bpmInput, #noteDensity, #metronomeBtn, #countIn, #tunerToggle",
@@ -66,6 +72,7 @@ function selectAudio(blob, filename) {
 
 const recorder = new GuitarRecorder({
   canvas: document.querySelector("#liveCanvas"),
+  onLevel: (level) => inputControls?.setLevel(level),
   onTime(seconds) {
     document.querySelector("#timer").textContent =
       `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -81,13 +88,39 @@ const recorder = new GuitarRecorder({
     );
   },
   onError(message) {
+    recordAttempt++;
+    metronome.stop();
+    elements.recordButton.disabled = false;
+    elements.recordButton.setAttribute("aria-label", t("Kaydı başlat"));
+    setText(
+      "#recordStatus",
+      "Tekrar deneyebilir veya ses dosyası yükleyebilirsin.",
+    );
     showMessage(message);
     setBusy(false);
     elements.recordButton.classList.remove("recording");
   },
 });
 
+inputControls = initializeInputControls({
+  onStart() {
+    elements.player.pause();
+    metronome.stop();
+    updateMetronomeButton();
+    setBusy(true);
+    elements.recordButton.disabled = true;
+    showMessage();
+  },
+  onStop() {
+    setBusy(false);
+    elements.recordButton.disabled = false;
+  },
+});
+
 const tuner = initializeTuner({
+  getInputOptions: () => inputControls.options(),
+  onLevel: (level) => inputControls.setLevel(level),
+  onInputReady: (info) => inputControls.showConnection(info),
   onStart() {
     elements.player.pause();
     metronome.stop();
@@ -108,6 +141,7 @@ elements.recordButton.addEventListener("click", async () => {
     return;
   }
   if (isBusy) return;
+  const attempt = ++recordAttempt;
   try {
     const bpm = readTargetBpm();
     setBusy(true);
@@ -117,13 +151,17 @@ elements.recordButton.addEventListener("click", async () => {
     metronome.stop();
     updateMetronomeButton();
     elements.recordButton.disabled = true;
-    setText("#recordStatus", "Mikrofon hazırlanıyor…");
-    await recorder.prepare();
+    setText("#recordStatus", "Ses girişi hazırlanıyor…");
+    const info = await recorder.prepare(inputControls.options());
+    if (!info || attempt !== recordAttempt || leaving) return;
+    inputControls.showConnection(info);
     if (document.querySelector("#countIn").checked) {
       await metronome.countIn(bpm, (remaining) => {
+        if (attempt !== recordAttempt || leaving) return;
         setText("#recordStatus", "Hazır ol: {remaining}", { remaining });
       });
     }
+    if (attempt !== recordAttempt || leaving) return;
     recorder.start();
     elements.recordButton.classList.add("recording");
     elements.recordButton.setAttribute("aria-label", t("Kaydı durdur"));
@@ -135,9 +173,7 @@ elements.recordButton.addEventListener("click", async () => {
     recorder.dispose();
     setBusy(false);
     showMessage(
-      error instanceof AnalysisError
-        ? error.message
-        : "Mikrofon başlatılamadı. Tarayıcı iznini ve mikrofon bağlantını kontrol et.",
+      error instanceof AnalysisError ? error.message : inputError(error),
     );
     setText(
       "#recordStatus",
@@ -362,6 +398,9 @@ document.querySelector("#resetBtn").addEventListener("click", () => {
   document.querySelector("#calisma").scrollIntoView({ behavior: "smooth" });
 });
 window.addEventListener("pagehide", () => {
+  leaving = true;
+  recordAttempt++;
+  inputControls.dispose();
   tuner.stop();
   recorder.dispose();
   metronome.dispose();

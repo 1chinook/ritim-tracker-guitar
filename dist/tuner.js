@@ -1,8 +1,15 @@
 import { LiveTuner } from "./live-tuner.js";
+import { inputError } from "./guitar-input.js";
 import { describePitch, guitarStrings, midiToFrequency } from "./pitch.js";
 import { setText, t } from "./preferences.js";
 
-export function initializeTuner({ onStart, onStop }) {
+export function initializeTuner({
+  onStart,
+  onStop,
+  getInputOptions = () => ({}),
+  onLevel,
+  onInputReady,
+}) {
   const button = document.querySelector("#tunerToggle");
   const selector = document.querySelector("#tunerString");
   const meter = document.querySelector("#tunerMeter");
@@ -79,6 +86,8 @@ export function initializeTuner({ onStart, onStop }) {
   }
 
   const microphone = new LiveTuner({
+    onLevel,
+    onInputReady,
     onPitch(pitch) {
       if (!pitch) {
         if (++missedFrames >= 3) {
@@ -108,7 +117,7 @@ export function initializeTuner({ onStart, onStop }) {
     },
     onEnded() {
       stop();
-      showStatus("Mikrofon bağlantısı kesildi. Tekrar başlat.");
+      showStatus("Ses girişi bağlantısı kesildi. Tekrar başlat.");
     },
   });
 
@@ -129,15 +138,13 @@ export function initializeTuner({ onStart, onStop }) {
     onStart();
     setText(button, "Akort cihazını durdur");
     button.setAttribute("aria-pressed", "true");
-    showStatus("Mikrofon hazırlanıyor…");
+    showStatus("Ses girişi hazırlanıyor…");
     try {
-      await microphone.start();
+      await microphone.start(getInputOptions());
       if (microphone.running) showStatus("Nota bekleniyor");
-    } catch {
+    } catch (error) {
       stop();
-      showStatus(
-        "Mikrofon başlatılamadı. Tarayıcı iznini ve mikrofon bağlantını kontrol et.",
-      );
+      showStatus(inputError(error));
     }
   });
   selector.addEventListener("change", () => {

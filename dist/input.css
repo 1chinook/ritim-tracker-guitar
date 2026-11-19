@@ -1,0 +1,79 @@
+.input-setup {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 18px;
+}
+.input-setup h4 {
+  margin: 0 0 16px;
+}
+.input-selectors {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.input-selectors label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.input-selectors select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--ink);
+}
+.input-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.input-actions button {
+  font-size: 13px;
+  padding: 9px 12px;
+}
+.input-level-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.input-level-row output {
+  min-width: 75px;
+  text-align: right;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.input-level {
+  flex: 1;
+  min-width: 0;
+  height: 12px;
+  background: var(--line);
+  overflow: hidden;
+  border-radius: 999px;
+}
+.input-level span {
+  display: block;
+  height: 100%;
+  width: var(--input-level, 0%);
+  background: var(--green);
+  transition: width 80ms linear;
+}
+.input-level[data-level="clip"] span {
+  background: #d84d36;
+}
+.input-level[data-level="low"] span {
+  background: #ba830b;
+}
+.input-setup .help {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+}
+.input-setup .help:empty {
+  display: none;
+}

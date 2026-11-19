@@ -1,5 +1,151 @@
 // Türkçe metinler aynı zamanda çeviri anahtarıdır. Dinamik değerler {ad} ile belirtilir.
 export const english = {
+  "Ses kartı veya mikrofonla çal ya da kaydını yükle. Eşit aralıklı gitar egzersizlerinde tahmini temponu ve ritim tutarlılığını incele.":
+    "Play through an audio interface or microphone, or upload your recording. Explore estimated tempo and rhythmic consistency in evenly spaced guitar exercises.",
+  "Ses kartı ve giriş": "Audio interface and input",
+  "Giriş cihazı": "Input device",
+  "Giriş kanalı": "Input channel",
+  "Sistem varsayılanı": "System default",
+  "1 · Sol / Mono": "1 · Left / Mono",
+  "2 · Sağ": "2 · Right",
+  "Tüm girişler · Mono karışım": "All inputs · Mono mix",
+  "Girişleri yenile": "Refresh inputs",
+  "Girişi test et": "Test input",
+  "Giriş testini durdur": "Stop input test",
+  "Giriş seviyesi": "Input level",
+  "Giriş kapalı": "Input off",
+  "Sinyal kırpılıyor · ses kartındaki gain değerini azalt.":
+    "Signal clipping · reduce the gain on your audio interface.",
+  "Sinyal bekleniyor · gitarı çal ve doğru kanalı kontrol et.":
+    "Waiting for signal · play your guitar and check the selected channel.",
+  "Sinyal düşük · ses kartındaki giriş seviyesini kontrol et.":
+    "Low signal · check the input gain on your audio interface.",
+  "Sinyal alınıyor": "Receiving signal",
+  "Cihaz adlarını görmek için girişi test et ve tarayıcı iznini ver.":
+    "Test the input and grant browser permission to see device names.",
+  "Gitarın bağlı olduğu kanalı seç. Aynı seçim kayıt ve akort cihazında kullanılır. Test sesi kaydedilmez ve hoparlöre verilmez. Tarayıcı yalnızca ses kartının sunduğu girişleri gösterir.":
+    "Select the channel your guitar is connected to. Recording and the tuner share this selection. Input testing does not record or play audio through speakers. Only inputs exposed by your audio interface to the browser are available.",
+  "Seçimi doğrulamak için girişi test et.":
+    "Test the input to check your selection.",
+  "Giriş testi durduruldu.": "Input test stopped.",
+  "Ses girişi hazırlanıyor…": "Preparing audio input…",
+  "Giriş testi açık · ses kaydedilmez ve hoparlöre verilmez.":
+    "Input test active · audio is not recorded or played through speakers.",
+  "Ses girişi {number}": "Audio input {number}",
+  "Seçili giriş · bağlantı veya izin gerekli":
+    "Selected input · connection or permission required",
+  "{name} · {channels} kanal · {rate} Hz":
+    "{name} · {channels} channels · {rate} Hz",
+  "Tarayıcıda otomatik ses işleme açık. Ses kartı ve tarayıcı ayarlarını kontrol et.":
+    "Automatic audio processing is active. Check your interface and browser settings.",
+  "Yankı giderme, gürültü bastırma ve otomatik gain kapalı.":
+    "Echo cancellation, noise suppression and automatic gain are off.",
+  "Otomatik ses işleme kapalı istendi; tarayıcı tüm ayarların durumunu bildirmiyor.":
+    "Automatic audio processing was requested off; the browser does not report every setting.",
+  "Geçerli bir giriş kanalı seç.": "Choose a valid input channel.",
+  "Sağ kanal için iki giriş kanalı gerekli. Sol kanalı seç veya ses kartının ayarlarını kontrol et.":
+    "The right channel requires two input channels. Choose Left or check your audio interface settings.",
+  "Ses girişi bu tarayıcıda kullanılamıyor. HTTPS veya yerel sunucu kullan.":
+    "Audio input is unavailable in this browser. Use HTTPS or a local server.",
+  "Ses girişi bağlantısı kesildi. Tekrar başlat.":
+    "The audio input disconnected. Start it again.",
+  "Ses girişine izin verilmedi. Tarayıcının mikrofon iznini kontrol et.":
+    "Audio input permission was denied. Check the browser microphone permission.",
+  "Seçili ses girişi bulunamadı. Ses kartını bağla ve girişleri yenile.":
+    "The selected audio input was not found. Connect the interface and refresh inputs.",
+  "Ses kartı açılamadı. Başka bir uygulama kullanıyor olabilir; aygıt ve sürücü ayarlarını kontrol et.":
+    "The audio interface could not open. Another app may be using it; check the device and driver settings.",
+  "Ses girişi başlatılamadı. Bağlantıyı kontrol edip tekrar dene.":
+    "Audio input could not start. Check the connection and try again.",
+  "Ses kaydı bu tarayıcıda desteklenmiyor.":
+    "Audio recording is not supported in this browser.",
+  "Kayıt kesildi. Ses kartı veya giriş bağlantını kontrol edip tekrar dene.":
+    "Recording was interrupted. Check your audio interface or input connection and try again.",
+  "● Ses girişi": "● Audio input",
+  "Dosya içe aktar": "Import file",
+  "Parti / ses": "Part / voice",
+  "İlk ölçü": "First measure",
+  "Son ölçü": "Last measure",
+  Önizle: "Preview",
+  "Tabı içe aktar": "Import tab",
+  Vazgeç: "Cancel",
+  "Dosya bu tarayıcıda okunur. En fazla 10 MB ve 128 adım. Seçilen tek parti ve ses aktarılır. Tempo ve ölçü değişimleri için aralığı daralt.":
+    "Files are read in this browser. Up to 10 MB and 128 steps. Only the selected part and voice are imported. Narrow the range around tempo and meter changes.",
+  "Gitar akordu": "Guitar tuning",
+  "Akort düzeni": "Tuning preset",
+  "Standart E": "Standard E",
+  "Yarım ses pes": "Half step down",
+  "Özel akort": "Custom tuning",
+  "İnce telden kalın tele": "Highest string to lowest",
+  "Akordu uygula": "Apply tuning",
+  "Perdeler korunur, tel etiketleri ve çalınan ses yeni akorda göre değişir. Akort değişimi geri alınabilir ve projeyle kaydedilir.":
+    "Frets stay the same; string labels and playback follow the new tuning. Tuning changes are undoable and saved with the project.",
+  "İnce telden kalın tele altı nota yaz. Örnek E4 B3 G3 D3 A2 E2.":
+    "Enter six notes from highest string to lowest, for example E4 B3 G3 D3 A2 E2.",
+  "Akort notalarını oktavlarıyla yaz. Örnek D2 veya F#3.":
+    "Include an octave for each tuning note, for example D2 or F#3.",
+  "Akort notası desteklenen aralığın dışında.":
+    "A tuning note is outside the supported range.",
+  "Dosya işlemi iptal edildi.": "File operation cancelled.",
+  "Dosya işlemi çok uzun sürdü. Daha küçük bir dosya seç.":
+    "Reading took too long. Choose a smaller file.",
+  "Dosya okuyucusu başlatılamadı. Sayfayı yenileyip tekrar dene.":
+    "The file reader could not start. Reload the page and try again.",
+  "Boş olmayan ve en fazla 10 MB bir tab dosyası seç.":
+    "Choose a non-empty tab file no larger than 10 MB.",
+  "Guitar Pro veya MusicXML dosyası seç.":
+    "Choose a Guitar Pro or MusicXML file.",
+  "Önce dosyayı aç ve işlemin bitmesini bekle.":
+    "Open a file and wait for reading to finish first.",
+  "Dosyada aktarılabilir altı telli gitar partisi bulunamadı.":
+    "No supported six-string guitar part was found in this file.",
+  "Önce bir dosya aç.": "Open a file first.",
+  "Dosya okunamadı.": "The file could not be read.",
+  "Dosya okunamadı. Geçerli bir Guitar Pro veya MusicXML dosyası seç.":
+    "The file could not be read. Choose a valid Guitar Pro or MusicXML file.",
+  "Bu notalar altı tel ve 0–24 perde aralığına yerleştirilemiyor.":
+    "These notes cannot fit six strings within frets 0–24.",
+  "Bazı teknikler bu sürümde gösterilemiyor.":
+    "Some techniques cannot be represented in this version.",
+  "Aktarılacak gitar partisini seç.": "Choose a guitar part to import.",
+  "Geçerli bir ölçü aralığı seç.": "Choose a valid measure range.",
+  "Bu dosyanın temposu 30–240 BPM aralığının dışında.":
+    "The file tempo is outside the supported 30–240 BPM range.",
+  "Kapo ve transpozisyon akorda işlendi.":
+    "Capo and transposition were included in the tuning.",
+  "Yalnızca seçilen parti ve ses aktarılır.":
+    "Only the selected part and voice are imported.",
+  "Bu nota süreleri desteklenmiyor.": "These note durations are not supported.",
+  "128 adım sınırı aşılıyor. Daha kısa bir ölçü aralığı seç.":
+    "The 128-step limit is exceeded. Choose a shorter measure range.",
+  "Bu nota süresi desteklenen sınırı aşıyor.":
+    "This note duration exceeds the supported limit.",
+  "Bu aralıkta ölçü değişiyor. Tek ölçü türü içeren bir aralık seç.":
+    "The meter changes in this range. Choose measures with the same meter.",
+  "Bu aralıkta tempo değişiyor. Sabit tempolu bir aralık seç.":
+    "The tempo changes in this range. Choose measures with a constant tempo.",
+  "Eksik ölçüyü dışarıda bırakan bir aralık seç.":
+    "Choose a range without the pickup measure.",
+  "Süsleme notaları aktarılmadı.": "Grace notes were not imported.",
+  "Bu sesin nota zamanlaması desteklenmiyor.":
+    "The note timing in this voice is not supported.",
+  "Bu aralıkta farklı sürelerle bağlanmış akor var. Daha sade bir ses veya aralık seç.":
+    "This range contains a chord with independently tied notes. Choose a simpler voice or range.",
+  "Perde bilgisi olmayan notalar akorda göre yerleştirildi.":
+    "Notes without fret information were assigned strings using this tuning.",
+  "Tekrar işaretleri açılmaz; ölçüler dosyadaki sırayla aktarılır.":
+    "Repeat signs are not expanded; measures are imported in file order.",
+  "Dosya okunuyor…": "Reading file…",
+  "{name} · {count} ölçü": "{name} · {count} measures",
+  "Partiyi ve ölçü aralığını seç, ardından önizle.":
+    "Choose the part and measure range, then preview.",
+  "Önizleme hazırlanıyor…": "Preparing preview…",
+  "{count} adım · {bpm} BPM. İçe aktarma geri alınabilir.":
+    "{count} steps · {bpm} BPM. Importing is undoable.",
+  "Tab içe aktarıldı. Geri al ile önceki çalışmana dönebilirsin.":
+    "Tab imported. Use Undo to return to your previous work.",
+  "Bu dosyanın nota yapısı desteklenmiyor. Daha sade bir ses veya ölçü aralığı seç.":
+    "The note structure is not supported. Choose a simpler voice or measure range.",
   Harmonik: "Harmonic",
   "Doğal harmonik": "Natural harmonic",
   "Yapay harmonik": "Artificial harmonic",

@@ -1,78 +1,52 @@
 import { detectPitch } from "./pitch.js";
+import { GuitarInput } from "./guitar-input.js";
 
 export class LiveTuner {
   running = false;
   generation = 0;
   timer = null;
-
-  constructor({ onPitch, onEnded }) {
+  context = null;
+  constructor({ onPitch, onEnded, onLevel, onInputReady = () => {} }) {
     this.onPitch = onPitch;
     this.onEnded = onEnded;
+    this.onInputReady = onInputReady;
+    this.input = new GuitarInput({
+      onLevel,
+      onEnded: () => {
+        this.stop();
+        this.onEnded();
+      },
+    });
   }
-
-  async start() {
+  async start(options) {
     this.stop();
     const generation = this.generation;
     this.running = true;
-    let stream;
-    let context;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      });
-      // İzin penceresi açıkken kullanıcı durdurduysa mikrofonu açık bırakma.
-      if (generation !== this.generation) {
-        stream.getTracks().forEach((track) => track.stop());
-        return;
-      }
-      this.stream = stream;
-      context = new AudioContext();
-      this.context = context;
-      await context.resume();
-      if (generation !== this.generation) return;
-      const analyser = context.createAnalyser();
+      const info = await this.input.open(options);
+      if (!info || generation !== this.generation) return;
+      this.context = this.input.context;
+      this.onInputReady(info);
+      const analyser = this.input.analyser;
       analyser.fftSize = 8192;
-      const source = context.createMediaStreamSource(stream);
-      source.connect(analyser); // Hoparlöre bağlanmaz: geri besleme yaratmaz.
       const samples = new Float32Array(analyser.fftSize);
-      for (const track of stream.getAudioTracks()) {
-        track.onended = () => {
-          if (this.running) {
-            this.stop();
-            this.onEnded();
-          }
-        };
-      }
       this.timer = setInterval(() => {
         if (generation !== this.generation) return;
         analyser.getFloatTimeDomainData(samples);
-        this.onPitch(detectPitch(samples, context.sampleRate));
+        this.onPitch(detectPitch(samples, this.context.sampleRate));
       }, 120);
     } catch (error) {
-      stream?.getTracks().forEach((track) => track.stop());
-      if (context && context.state !== "closed") await context.close();
       if (generation === this.generation) {
         this.stop();
         throw error;
       }
     }
   }
-
   stop() {
     this.running = false;
     this.generation++;
     clearInterval(this.timer);
-    this.stream?.getTracks().forEach((track) => {
-      track.onended = null;
-      track.stop();
-    });
-    this.stream = null;
-    if (this.context && this.context.state !== "closed")
-      void this.context.close();
+    this.input.close();
     this.context = null;
   }
 }

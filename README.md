@@ -182,7 +182,7 @@ npm run format:check
 npm run format
 ```
 
-Planned improvements include Guitar Pro/MusicXML, multiple instruments, more natural guitar sound, and note-by-note performance alignment.
+Planned improvements include multiple instruments and note-by-note performance alignment.
 
 ### Genişletilmiş gitar teknikleri / Extended guitar techniques
 
@@ -199,3 +199,33 @@ Shift-select two adjacent notes on one string to connect them with slide, hammer
 Linked notes share one sound source. Let ring lasts until the next note on the same string, with a two-second
 tail after the last step, limited by natural sample length. Harmonic and tapping timbres are approximate.
 Pick direction is notation only. Natural harmonics use frets 5, 7, 12, 19 or 24.
+
+### Tab dosyası içe aktarma ve alternatif akortlar / Tab file import and alternate tunings
+
+Editörün üstündeki **Dosya içe aktar** menüsünden Guitar Pro (.gp3, .gp4, .gp5, .gpx, .gp) veya MusicXML (.xml, .musicxml, .mxl) seç. Parti/ses ve ölçü aralığını belirle, **Önizle**, sonra **Tabı içe aktar**. Onaylayana kadar mevcut taslak değişmez; aktarımı tek adımda geri alabilirsin. Dosyalar tarayıcıda okunur, sunucuya yüklenmez. Okuyucu [alphaTab 1.9.0](https://github.com/CoderLine/alphaTab/tree/v1.9.0) kullanır; lisans ve kaynak bilgisi `dist/vendor/alphatab/` altındadır.
+
+İlk sürüm sınırları: en fazla 10 MB, 128 adım, altı tel, 0–24 perde ve seçilen tek ses. Tempo/ölçü değişen aralıklarda, eksik ölçülerde veya farklı sürelerle bağlanmış akorlarda daha dar/sade bir aralık istenir. Tekrarlar açılmaz; süsleme notaları atlanır ve temsil edilemeyen teknikler önizlemede bildirilir. Özgün örnek MusicXML ve Guitar Pro 7 gidiş-dönüş testleri mevcuttur; her üreticinin tüm dosya varyasyonları doğrulanmış değildir.
+
+**Gitar akordu** menüsünde Standart E, Drop D, yarım ses pes, D standard, Drop C, DADGAD, Open G ve Open D bulunur. Özel akordu ince telden kalın tele oktavlarla yaz (ör. E4 B3 G3 D3 A2 D2), ardından uygula. Perdeler değişmez; tel etiketleri ve oynatma yeni akorda göre güncellenir. Akort taslak/JSON ile korunur ve geri alınabilir. Ana sayfadaki mikrofon akort cihazı hâlâ standart E hedeflerini kullanır.
+
+Use **Import file** above the editor to choose Guitar Pro (.gp3, .gp4, .gp5, .gpx, .gp) or MusicXML (.xml, .musicxml, .mxl). Select a part/voice and measure range, **Preview**, then **Import tab**. The existing draft changes only when applied; the whole import is undoable. Files are parsed locally with alphaTab 1.9.0 and never uploaded. License and source notices are in `dist/vendor/alphatab/`.
+
+Initial limits: 10 MB, 128 steps, six strings, frets 0–24, and one selected voice. Variable tempo/meter, pickup measures, and chords with independently tied notes require a narrower or simpler range. Repeats are not expanded; grace notes are skipped and unsupported techniques produce preview warnings. Original MusicXML and Guitar Pro 7 round-trip fixtures are tested; not every producer’s format variation has been verified.
+
+**Guitar tuning** offers Standard E, Drop D, half step down, D standard, Drop C, DADGAD, Open G and Open D, plus custom six-note tuning with octaves from highest string to lowest. Apply to update string labels and playback while preserving frets. Tuning is saved in drafts/JSON and can be undone. The microphone tuner on the practice page still targets standard E.
+
+### Ses kartı girişi / Audio interface input
+
+Ana sayfada **Ses kartı ve giriş** alanından aygıtı ve gitarın bağlı olduğu kanalı seç. **Girişi test et** ile tarayıcı iznini ver; tarayıcı bu izne ses kartında da “mikrofon” diyebilir. İzin sonrası aygıt adları yenilenir. Sol/Mono (kanal 1), Sağ (kanal 2) veya mono karışım kullanılabilir. Fiziksel soketlerin tarayıcı kanallarıyla eşleşmesi sürücüye bağlıdır; görünmeyen kanallar için ses kartının yönlendirme ayarlarını kontrol et. Tarayıcı tek kanal sunuyorsa veya kanal sayısını bildirmiyorsa sağ giriş reddedilir. Eksik bir seçili aygıt yerine sessizce başka aygıta geçilmez.
+
+Seviye göstergesi seçili mono sinyalin RMS değerini dBFS olarak gösterir: −60 dBFS altında sinyal beklenir, −40 dBFS altında düşük seviye uyarısı verilir. Mutlak örnek tepesi 0,98 veya üzerindeyse kırpılma uyarısı bir saniye tutulur. Bunlar giriş hazırlığı eşikleridir; çalım puanı veya analog donanımdaki kırpılmanın garantili ölçümü değildir. Testte ses kaydedilmez, sunucuya yüklenmez ve hoparlöre verilmez.
+
+Kayıt ve akort cihazı aynı aygıt/kanal seçimini kullanır. Kayıt, seçili sinyali mono olarak kaydeder; seviye ölçümü de aynı yoldadır. Kayıt, akort veya giriş testi açıkken giriş seçimi kilitlenir. Durdurma, sayfadan ayrılma, izin iptali ve bağlantı kopmasında ses kaynakları bırakılır. Yankı giderme, gürültü bastırma ve otomatik gain kapalı istenir; uygulama tarayıcının bildirdiği gerçek durumu gösterir. Giriş tercihi bu tarayıcıda saklanır. Bu aşama ASIO denetimi veya gecikme kalibrasyonu içermez.
+
+On the practice page, choose an **Input device** and **Input channel** under **Audio interface and input**. Use **Test input** to grant browser permission, which may be called “microphone” permission even for an audio interface. Device labels refresh after permission. Left/Mono (channel 1), Right (channel 2), or a mono mix are available. Physical socket mapping depends on the driver; only channels exposed to the browser are accessible. Right is rejected for mono or unknown channel counts. A missing selected device does not silently fall back to another input.
+
+The meter shows the selected mono signal’s RMS level in dBFS. Below −60 dBFS it waits for signal; below −40 dBFS it warns about low input. An absolute sample peak of at least 0.98 holds a clipping warning for one second. These are preparation thresholds, not a performance score or a guaranteed detector of analog clipping. Input testing does not record, upload, or play audio through speakers.
+
+Recording and the tuner share the selected input and channel. Recording captures the routed mono signal used by the meter. Input choices are locked during recording, tuning or testing. Stop, page exit, cancellation and disconnection release audio resources. Echo cancellation, noise suppression and automatic gain are requested off; the interface shows what the browser actually reports. Device and channel preferences are saved locally. ASIO control and latency calibration are not part of this step.
+
+Browser capture reference: [MDN constraints and settings](https://developer.mozilla.org/en-US/docs/Web/API/Media_Capture_and_Streams_API/Constraints).

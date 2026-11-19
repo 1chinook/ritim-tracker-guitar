@@ -11,6 +11,7 @@
     <script src="theme-init.js"></script>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="practice.css" />
+    <link rel="stylesheet" href="input.css" />
     <link rel="stylesheet" href="themes.css" />
     <link rel="stylesheet" href="tuner.css" />
     <link rel="stylesheet" href="header.css" />
@@ -48,8 +49,8 @@
           <p class="eyebrow">GİTAR ÇALIŞMANIN YENİ RİTMİ</p>
           <h1>Çaldığını duy.<br /><em>Zamanını gör.</em></h1>
           <p class="lead">
-            Mikrofonla çal ya da kaydını yükle. Eşit aralıklı gitar
-            egzersizlerinde tahmini temponu ve ritim tutarlılığını incele.
+            Ses kartı veya mikrofonla çal ya da kaydını yükle. Eşit aralıklı
+            gitar egzersizlerinde tahmini temponu ve ritim tutarlılığını incele.
           </p>
           <a class="primary" href="#calisma">Analize başla <span>→</span></a>
           <span class="prototype-badge"
@@ -210,12 +211,70 @@ E|-------------------------------------|</textarea
               </div>
               <div class="source-tabs">
                 <button class="source active" data-mode="record">
-                  ● Mikrofon</button
+                  ● Ses girişi</button
                 ><button class="source" data-mode="upload">
                   ↑ Dosya yükle
                 </button>
               </div>
               <div id="recordPanel" class="panel active">
+                <section class="input-setup" aria-labelledby="inputHeading">
+                  <h4 id="inputHeading">Ses kartı ve giriş</h4>
+                  <div class="input-selectors">
+                    <label
+                      >Giriş cihazı
+                      <select id="inputDevice">
+                        <option value="">Sistem varsayılanı</option>
+                      </select>
+                    </label>
+                    <label
+                      >Giriş kanalı
+                      <select id="inputChannel">
+                        <option value="left">1 · Sol / Mono</option>
+                        <option value="right">2 · Sağ</option>
+                        <option value="mix">Tüm girişler · Mono karışım</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="input-actions">
+                    <button class="ghost" id="inputRefresh">
+                      Girişleri yenile
+                    </button>
+                    <button class="ghost" id="inputTest" aria-pressed="false">
+                      Girişi test et
+                    </button>
+                  </div>
+                  <div class="input-level-row">
+                    <div
+                      id="inputLevel"
+                      class="input-level"
+                      role="meter"
+                      aria-label="Giriş seviyesi"
+                      aria-valuemin="-72"
+                      aria-valuemax="0"
+                      aria-valuenow="-72"
+                      data-level="idle"
+                    >
+                      <span></span>
+                    </div>
+                    <output id="inputLevelValue">— dBFS</output>
+                  </div>
+                  <p id="inputLevelStatus" class="help" role="status">
+                    Giriş kapalı
+                  </p>
+                  <p id="inputStatus" class="help" role="status">
+                    Cihaz adlarını görmek için girişi test et ve tarayıcı iznini
+                    ver.
+                  </p>
+                  <p id="inputConnection" class="help"></p>
+                  <p id="inputProcessing" class="help"></p>
+                  <p class="help">
+                    Gitarın bağlı olduğu kanalı seç. Aynı seçim kayıt ve akort
+                    cihazında kullanılır. Test sesi kaydedilmez ve hoparlöre
+                    verilmez. Tarayıcı yalnızca ses kartının sunduğu girişleri
+                    gösterir.
+                  </p>
+                </section>
+
                 <div class="recorder">
                   <canvas id="liveCanvas" width="600" height="120"></canvas>
                   <div id="timer">00:00</div>
