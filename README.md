@@ -1,25 +1,66 @@
-# Ritim İzi
+# Ritim İzi (`ritim-izi-gitar`)
 
-[Türkçe](#başlatma) · [English](#english)
+[Türkçe](#kurulum-ve-çalıştırma) · [English](#english)
 
-Gitar egzersizlerini mikrofon veya ses dosyası üzerinden inceleyen tarayıcı uygulaması.
+Gitar egzersizlerini mikrofon, ses kartı veya ses dosyası üzerinden inceleyen; canlı akort cihazı ve tab editörü içeren tarayıcı uygulaması.
 
-Bu proje henüz ilkel bir ilk sürümdür; öğrenme ve deneme amacıyla geliştirilmektedir. Tab editörü, gitar örnekleriyle oynatma ve akort cihazı temel prototiplerdir. Gerçek mikrofon ve tarayıcıyla uçtan uca kullanım henüz tam doğrulanmamıştır; tab ile performansı nota nota eşleştirme desteklenmez.
+| Alan           | Değer                                                 |
+| -------------- | ----------------------------------------------------- |
+| **Kategori**   | Frontend Web Uygulaması                               |
+| **Teknoloji**  | Node.js 22+ Statik Sunucu + Vanilla JS + AlphaTab 1.9 |
+| **Port / URL** | `3002` · `http://127.0.0.1:3002`                      |
+| **Başlatıcı**  | `BASLAT.bat` (`start.ps1`)                            |
+| **Doğrulama**  | `npm test && npm run format:check`                    |
 
-Ana sayfa akort, kayıt ve analiz araçlarını içerir. Tab editörü üst menüdeki bağlantıdan açılan ayrı `editor.html` sayfasındadır. Dil ve görünüm, etiketli seçim menülerinden değiştirilir.
+## Özellikler
 
-Üst çubuktan Türkçe veya İngilizce arayüzü seçebilir, açık ve karanlık tema arasında geçiş yapabilirsin. Tercihler bu tarayıcıda saklanır. İlk açılışta tema sistem ayarına uyar; varsayılan dil Türkçedir.
+- **Performans Analizi:** Mikrofon veya ses dosyasından tempo (BPM), ritim tutarlılığı ve nota aralığı dalgalanması ölçümü.
+- **Canlı Akort Cihazı:** Standart E2–E4 otomatik/manuel tel hedefi ve cent sapması gösterimi.
+- **Gelişmiş Tab Editörü (`editor.html`):** Sürümlü nota belgesi, gitar ses örnekleriyle oynatma, bend/slide/vibrato/harmonik teknikleri, alternatif akortlar ve Guitar Pro / MusicXML içe aktarma.
+- **Ses Kartı Girişi ve Çoklu Dil:** Kanal seçimi (Sol/Sağ/Karışım), RMS/kırpılma göstergesi, Türkçe/İngilizce arayüz ve açık/koyu tema.
 
-## Başlatma
+## Klasör Yapısı
 
-Node.js 22 veya üzeri kurulu olmalı. Proje klasöründe:
+```text
+ritim-izi-gitar/
+├── dist/                   # Uygulama arayüzü, ses/ritim/tab modülleri ve örnek ses bankaları
+├── scripts/                # Yerel geliştirme sunucusu (serve.mjs, PORT=3002)
+├── test/                   # Node.js birim testleri (122 test)
+├── docs/                   # Veri modeli ve sınırlar (score-format.md)
+├── package.json            # Bağımlılıklar ve test/biçimlendirme betikleri
+├── BASLAT.bat & start.ps1  # Tek tık otomatik yeniden başlatıcı
+├── AGENTS.md               # Mühendislik kuralları
+└── README.md
+```
+
+## Kurulum ve Çalıştırma
+
+- **Windows Tek Tık Başlatıcı (Önerilen):** `BASLAT.bat` dosyasına çift tıklayın (`3002` portundaki eski süreci temizler, gerekirse `npm install` çalıştırır ve tarayıcıyı açar).
+- **Terminal (Node.js 22+):**
 
 ```sh
 npm install
 npm start
 ```
 
-Tarayıcıda http://127.0.0.1:4173 adresini aç. Mikrofon için localhost veya HTTPS gerekir; HTML dosyasını çift tıklayarak açmak yeterli değildir.
+Tarayıcıda `http://127.0.0.1:3002` adresini açın. Mikrofon erişimi için `localhost` veya HTTPS gerekir.
+
+## Testler ve Doğrulama
+
+```sh
+npm test
+npm run format:check
+```
+
+---
+
+## Kullanım Notları
+
+Bu proje henüz ilkel bir ilk sürümdür; öğrenme ve deneme amacıyla geliştirilmektedir. Tab editörü, gitar örnekleriyle oynatma ve akort cihazı temel prototiplerdir. Gerçek mikrofon ve tarayıcıyla uçtan uca kullanım henüz tam doğrulanmamıştır; tab ile performansı nota nota eşleştirme desteklenmez.
+
+Ana sayfa akort, kayıt ve analiz araçlarını içerir. Tab editörü üst menüdeki bağlantıdan açılan ayrı `editor.html` sayfasındadır. Dil ve görünüm, etiketli seçim menülerinden değiştirilir.
+
+Üst çubuktan Türkçe veya İngilizce arayüzü seçebilir, açık ve karanlık tema arasında geçiş yapabilirsin. Tercihler bu tarayıcıda saklanır. İlk açılışta tema sistem ayarına uyar; varsayılan dil Türkçedir.
 
 ## Kullanım
 
@@ -108,7 +149,7 @@ npm install
 npm start
 ```
 
-Open http://127.0.0.1:4173 in your browser. Microphone access requires localhost or HTTPS. Opening the HTML file directly will not work.
+Open http://127.0.0.1:3002 in your browser. Microphone access requires localhost or HTTPS. Opening the HTML file directly will not work.
 
 Use the header controls to switch between Turkish and English, or between light and dark mode. Your preferences are saved in this browser. On first use, the theme follows your system setting and the language defaults to Turkish. Changing language or theme preserves the selected audio and displayed analysis.
 

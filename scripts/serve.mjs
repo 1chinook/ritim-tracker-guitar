@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+const port = Number(process.env.PORT || 3002);
 const publicDirectory = fileURLToPath(new URL("../dist/", import.meta.url));
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -37,6 +38,6 @@ http
       response.writeHead(404).end("Not found");
     }
   })
-  .listen(4173, "127.0.0.1", () =>
-    console.log("Ritim İzi: http://127.0.0.1:4173"),
+  .listen(port, "127.0.0.1", () =>
+    console.log(`Ritim İzi: http://127.0.0.1:${port}`),
   );
